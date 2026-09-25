@@ -1,10 +1,9 @@
 # 3Next — AI Quick Capture & Next Action Assistant
 
-> **Nói một câu – biết ngay 3 việc cần làm tiếp.** *(slogan tạm, sẽ chốt sau)*
+> **Nói một câu – biết ngay 3 việc cần làm tiếp.** 
 
 3Next là mobile app giúp sinh viên và người trẻ bận rộn ghi lại task/deadline thật nhanh bằng giọng nói hoặc text. AI tự tách nội dung thành **task, deadline, mức ưu tiên** và luôn chỉ hiển thị **3 việc quan trọng nhất** cần làm tiếp theo.
 
-Project môn Phát triển Ứng dụng Di động — nhóm **L01 – Show Me Product**.
 
 ## 1. Links
 
@@ -16,22 +15,13 @@ Project môn Phát triển Ứng dụng Di động — nhóm **L01 – Show Me P
 
 > Toàn bộ tài liệu của Assignment (Project Overview, Market Research, Business Canvas, MVP Features, User Flows) nằm trên **Wiki**, không nằm trong repo.
 
-## 2. Thành viên
-
-| Họ tên | MSSV | GitHub | Vai trò |
-|---|---|---|---|
-| ... | ... | @... | Leader |
-| ... | ... | @... | ... |
-| ... | ... | @... | ... |
-| ... | ... | @... | ... |
-
-## 3. Tech stack (dự kiến)
+## 2. Tech stack (dự kiến)
 
 - **Mobile:** _TBD_
 - **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice
 - **Backend / Database:** _TBD_
 
-## 4. Cấu trúc thư mục
+## 3. Cấu trúc thư mục
 
 ```text
 3next/
@@ -43,11 +33,11 @@ Project môn Phát triển Ứng dụng Di động — nhóm **L01 – Show Me P
     └── assets/    # hình ảnh, diagram dùng cho wiki
 ```
 
-## 5. Chạy dự án
+## 4. Chạy dự án
 
 _Sẽ cập nhật khi chốt tech stack._
 
-## 6. Git workflow
+## 5. Git workflow
 
 ### Các nhánh chính
 
@@ -97,7 +87,7 @@ Commit:  feat: add quick capture screen
          chore: add gitignore
 ```
 
-## 7. Nguyên tắc làm việc nhóm
+## 6. Nguyên tắc làm việc nhóm
 
 - Không push trực tiếp vào `main`.
 - Mỗi task = 1 issue trên Project board = 1 branch riêng.

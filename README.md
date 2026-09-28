@@ -17,8 +17,8 @@
 
 ## 2. Tech stack (dự kiến)
 
-- **Mobile:** _TBD_
-- **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice
+- **Mobile:** Flutter
+- **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice (hiện tại `mobile/lib/services/ai_parser_service.dart` là bản mock heuristic để demo flow, chưa gọi API thật)
 - **Backend / Database:** _TBD_
 
 ## 3. Cấu trúc thư mục
@@ -35,7 +35,13 @@
 
 ## 4. Chạy dự án
 
-_Sẽ cập nhật khi chốt tech stack._
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+MVP hiện có: màn hình Capture (nhập text) → mock AI tách task/deadline → màn hình Top 3 (kéo thả đổi thứ tự + xác nhận). Voice input và kết nối AI thật/backend sẽ làm ở bước sau.
 
 ## 5. Git workflow
 

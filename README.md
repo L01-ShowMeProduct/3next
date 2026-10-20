@@ -10,14 +10,14 @@
 | Tài nguyên | Link |
 |---|---|
 | Wiki (tài liệu dự án) | https://github.com/L01-ShowMeProduct/3next/wiki |
-| Project board | _TBD_ |
+| Project board | https://github.com/orgs/L01-ShowMeProduct/projects/1 |
 | Design (Figma) | _TBD_ |
 
-> Toàn bộ tài liệu của Assignment (Project Overview, Market Research, Business Canvas, MVP Features, User Flows) nằm trên **Wiki**, không nằm trong repo.
+> Toàn bộ tài liệu của Assignment (Project Direction, Mobile Rationale, Evidence Plan, User Research, Existing Solutions, Business Canvas, MVP Scope, User Stories, User Flows, Project Plan...) nằm trên **Wiki**, không nằm trong repo.
 
 ## 2. Tech stack (dự kiến)
 
-- **Mobile:** _TBD_
+- **Frontend:** React + TypeScript
 - **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice
 - **Backend / Database:** _TBD_
 

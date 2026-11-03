@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#2563EB</color>
+    <color name="surface">#F3F4F6</color>
+    <color name="card">#FFFFFF</color>
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#6B7280</color>
+
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_text">#111827</color>
+    <color name="widget_subtext">#6B7280</color>
+    <color name="widget_icon">#9CA3AF</color>
+
+    <color name="priority_high">#EF4444</color>
+    <color name="priority_medium">#F59E0B</color>
+    <color name="priority_low">#10B981</color>
+</resources>

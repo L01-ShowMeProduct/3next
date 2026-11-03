@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">3Next</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Việc nên làm tiếp</string>
+    <string name="widget_description">Xem 3 việc nên làm tiếp theo ngay trên màn hình chính và bấm để hoàn thành.</string>
+    <string name="widget_refresh">Làm mới</string>
+    <string name="widget_done">Đánh dấu hoàn thành</string>
+    <string name="widget_loading">Đang cập nhật...</string>
+    <string name="widget_updated_at">Cập nhật %1$s</string>
+    <string name="widget_offline_cached">Không kết nối được, đang hiện dữ liệu cũ</string>
+    <string name="widget_offline">Không kết nối được tới máy chủ</string>
+    <string name="widget_empty">Không còn việc nào. Hãy ghi việc mới trong app.</string>
+    <string name="widget_no_data">Chưa có dữ liệu. Bấm làm mới hoặc kiểm tra địa chỉ máy chủ trong app.</string>
+
+    <!-- Màn hình chính của app -->
+    <string name="screen_subtitle">Nói một câu, biết ngay 3 việc nên làm tiếp</string>
+    <string name="section_server">Máy chủ API</string>
+    <string name="hint_server">Địa chỉ máy chủ, ví dụ https://3next-api.onrender.com</string>
+    <string name="btn_save_test">Lưu và thử kết nối</string>
+    <string name="section_capture">Ghi nhanh</string>
+    <string name="hint_capture">Gõ hoặc nói một câu, ví dụ: Thứ 6 nộp báo cáo, mai họp nhóm lúc 9 giờ</string>
+    <string name="btn_voice">Nói</string>
+    <string name="btn_capture">Ghi lại</string>
+    <string name="section_top">Top 3 hiện tại</string>
+    <string name="btn_refresh">Làm mới</string>
+    <string name="btn_add_widget">Thêm widget vào màn hình chính</string>
+    <string name="msg_saved_ok">Kết nối tốt. Đã lưu địa chỉ máy chủ.</string>
+    <string name="msg_connect_failed">Không kết nối được: %1$s</string>
+    <string name="msg_captured">Đã lưu %1$d việc.</string>
+    <string name="msg_capture_failed">Không ghi được: %1$s</string>
+    <string name="msg_loading">Đang tải... (lần đầu có thể mất tới 1 phút nếu máy chủ đang ngủ)</string>
+    <string name="msg_top_empty">Chưa có việc nào.</string>
+    <string name="msg_voice_unavailable">Máy này không có công cụ nhận dạng giọng nói.</string>
+    <string name="msg_widget_pin_unsupported">Launcher không hỗ trợ thêm nhanh. Hãy nhấn giữ màn hình chính, chọn Widget, rồi chọn 3Next.</string>
+    <string name="msg_widget_pin_requested">Hãy xác nhận trong hộp thoại để thêm widget.</string>
+    <string name="msg_enter_text">Hãy nhập hoặc nói một câu trước.</string>
+</resources>

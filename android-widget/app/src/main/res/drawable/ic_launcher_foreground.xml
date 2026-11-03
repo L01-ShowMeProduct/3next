@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Ba thanh ngang tượng trưng cho 3 việc, thanh đầu có dấu tích -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,36 h8 v8 h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,38 h34 a2,2 0 0 1 2,2 v0 a2,2 0 0 1 -2,2 h-34 a2,2 0 0 1 -2,-2 v0 a2,2 0 0 1 2,-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,50 h8 v8 h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,52 h28 a2,2 0 0 1 2,2 v0 a2,2 0 0 1 -2,2 h-28 a2,2 0 0 1 -2,-2 v0 a2,2 0 0 1 2,-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,64 h8 v8 h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,66 h22 a2,2 0 0 1 2,2 v0 a2,2 0 0 1 -2,2 h-22 a2,2 0 0 1 -2,-2 v0 a2,2 0 0 1 2,-2z" />
+</vector>

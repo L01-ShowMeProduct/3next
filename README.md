@@ -19,7 +19,8 @@
 
 - **Frontend:** React + TypeScript
 - **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice
-- **Backend / Database:** _TBD_
+- **Backend:** NestJS (TypeScript), REST API có Swagger Docs, xem `backend/README.md`
+- **Database:** _TBD_ (hiện lưu trong bộ nhớ)
 
 ## 3. Cấu trúc thư mục
 

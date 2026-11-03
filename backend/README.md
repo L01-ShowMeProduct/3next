@@ -1,67 +1,84 @@
-# 3Next Backend
+# 3Next API — NestJS Backend
 
-REST API cho 3Next, viết bằng NestJS 11 (TypeScript). Có **Swagger Docs** để thử API trực tiếp tại `/docs`.
+REST API backend cho ứng dụng **3Next Task Manager**, phục vụ bài tập nhóm.
 
-## Hai collection
+## Tech Stack
 
-| Collection | Vai trò | Endpoint chính |
-|---|---|---|
-| **Captures** | Nhận một câu (gõ hoặc nói), AI tách thành các task nháp, người dùng xác nhận hoặc bỏ qua | `POST /captures`, `POST /captures/{id}/confirm`, `DELETE /captures/{id}`, `GET /captures`, `GET /captures/{id}` |
-| **Tasks** | Quản lý task và lấy các việc nên làm tiếp | `POST /tasks`, `GET /tasks`, `GET /tasks/top`, `GET /tasks/{id}`, `PATCH /tasks/{id}`, `POST /tasks/{id}/complete`, `DELETE /tasks/{id}` |
+- **NestJS** (Node.js framework)
+- **In-memory store** (không cần database)
+- **Swagger UI** – test API trực tiếp trên trình duyệt
+- **Render** – deploy miễn phí
 
-Ngoài ra có `GET /health` để kiểm tra server.
+---
 
-Luồng chính của sản phẩm tương ứng với các API:
-
-1. `POST /captures` với `{"text": "Thứ 6 nộp báo cáo, mai họp nhóm lúc 9 giờ"}` nhận về các task nháp.
-2. `POST /captures/{id}/confirm` để lưu (gửi body rỗng, hoặc gửi `tasks` đã sửa).
-3. `GET /tasks/top` lấy Top 3 việc nên làm tiếp, kèm điểm và lý do.
-4. `POST /tasks/{id}/complete` đánh dấu xong, việc đó rời khỏi Top 3.
-
-## Chạy trên máy
-
-Cần Node.js 20 trở lên.
+## Chạy local
 
 ```bash
-cd backend
+cd app/backend
 npm install
-npm run start:dev      # chạy ở http://localhost:3000, Swagger ở http://localhost:3000/docs
-npm test               # chạy toàn bộ test
-npm run build          # build ra dist/
-npm run start:prod     # chạy bản đã build
+npm run start:dev
 ```
 
-Biến môi trường (xem `.env.example`):
+Swagger UI: http://localhost:3000/api
 
-| Biến | Mặc định | Ý nghĩa |
-|---|---|---|
-| `PORT` | `3000` | Cổng server |
-| `SEED_DEMO_DATA` | `true` | Tạo sẵn vài task mẫu khi khởi động để thử Top 3 |
+---
 
-## Cách hoạt động
+## Deploy lên Render
 
-- **Tách câu (`src/captures/parser`)**: bộ quy tắc cho tiếng Việt, hiểu "hôm nay", "mai", "mốt", "thứ 2 đến chủ nhật", "tuần sau", ngày `dd/mm`, giờ như "9 giờ", "7h30", "3 giờ chiều", cùng từ khóa ưu tiên như "gấp", "không gấp". Câu không có mốc thời gian thì deadline để trống, không tự đoán. Múi giờ Việt Nam (UTC+7). Đây là bản heuristic, chưa dùng LLM, có thể thay bằng LLM mà không đổi API.
-- **Xếp hạng (`src/tasks/ranking.ts`)**: điểm = độ gấp của deadline (tối đa 100, quá hạn là cao nhất) + trọng số ưu tiên (cao 30, trung bình 15, thấp 0). Mỗi việc trong Top 3 kèm lý do bằng tiếng Việt.
-- **Lưu trữ**: trong bộ nhớ, dữ liệu mất khi server khởi động lại. Khi nối Firestore chỉ cần thay phần lưu trữ trong `TasksService` và `CapturesService`.
-- **Kiểm tra dữ liệu**: dữ liệu sai trả `400`, không tìm thấy trả `404`, xác nhận capture hai lần trả `409`, câu không tách được việc nào trả `422`.
+1. Push code lên GitHub (chỉ cần thư mục `app/backend/`)
+2. Vào [render.com](https://render.com) → **New → Web Service**
+3. Kết nối repo → Render tự đọc `render.yaml`
+4. Đặt **Root Directory** = `app/backend`
+5. Deploy → lấy URL dạng `https://3next-api.onrender.com/api`
 
-## Deploy
+---
 
-### Render (miễn phí)
+## API Collections
 
-Repo có sẵn `render.yaml` ở thư mục gốc.
+### 📦 Collection 1: Tasks
 
-1. Vào https://dashboard.render.com, chọn **New**, rồi **Blueprint**.
-2. Kết nối GitHub và chọn repo `L01-ShowMeProduct/3next`, chọn nhánh chứa code backend.
-3. Bấm **Apply**. Render tự build bằng `backend/Dockerfile` và cấp địa chỉ dạng `https://3next-api.onrender.com`.
-4. Swagger Docs nằm ở `<địa chỉ>/docs`. Mở địa chỉ gốc cũng tự chuyển sang trang này.
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| `GET` | `/tasks` | Danh sách task (filter + rank) |
+| `POST` | `/tasks` | Tạo task thủ công |
+| `GET` | `/tasks/:id` | Chi tiết task |
+| `PATCH` | `/tasks/:id` | Cập nhật task |
+| `PATCH` | `/tasks/:id/status` | Đánh dấu done/open |
+| `PATCH` | `/tasks/reorder` | Sắp xếp thủ công |
+| `DELETE` | `/tasks/:id` | Xoá task |
 
-Gói miễn phí của Render tự tắt sau khoảng 15 phút không có người dùng, nên lần mở đầu tiên có thể chờ 30 đến 60 giây.
+### 📦 Collection 2: Captures
 
-### Docker
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| `GET` | `/captures` | Danh sách captures |
+| `POST` | `/captures` | Tạo capture (văn bản đầu vào) |
+| `GET` | `/captures/:id` | Chi tiết + drafts |
+| `POST` | `/captures/:id/parse` | Tách task (local / Gemini) |
+| `POST` | `/captures/:id/confirm` | Xác nhận → tạo Task |
+| `DELETE` | `/captures/:id` | Huỷ capture |
+
+---
+
+## Ví dụ flow đầy đủ
 
 ```bash
-cd backend
-docker build -t 3next-api .
-docker run -p 3000:3000 3next-api
+# 1. Tạo capture
+POST /captures
+{ "text": "Ngày mai 9h họp nhóm, cuối tuần nộp bài", "mode": "text" }
+
+# 2. Tách task (engine local)
+POST /captures/{id}/parse
+{ "engine": "local" }
+
+# 3. Xem drafts → chọn id muốn lưu
+GET /captures/{id}
+
+# 4. Xác nhận → tạo Tasks
+POST /captures/{id}/confirm
+{ "selectedIds": ["draft-uuid-1", "draft-uuid-2"] }
+
+# 5. Xem Tasks đã tạo
+GET /tasks?status=open&ranked=true
 ```
+

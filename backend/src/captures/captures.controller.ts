@@ -1,83 +1,107 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
-  ApiConflictResponse,
-  ApiCreatedResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-  ApiUnprocessableEntityResponse,
+  Controller, Get, Post, Delete,
+  Param, Body,
+} from '@nestjs/common';
+import {
+  ApiTags, ApiOperation, ApiParam, ApiResponse,
 } from '@nestjs/swagger';
 import { CapturesService } from './captures.service';
-import { CaptureResponseDto, ConfirmCaptureResponseDto } from './dto/capture-response.dto';
-import { ConfirmCaptureDto } from './dto/confirm-capture.dto';
 import { CreateCaptureDto } from './dto/create-capture.dto';
-import { ListCapturesQueryDto } from './dto/list-captures-query.dto';
+import { ParseCaptureDto } from './dto/parse-capture.dto';
+import { ConfirmCaptureDto } from './dto/confirm-capture.dto';
 
 @ApiTags('Captures')
 @Controller('captures')
 export class CapturesController {
   constructor(private readonly capturesService: CapturesService) {}
 
+  // ── GET /captures ──────────────────────────────────────────────────────────
+  @Get()
+  @ApiOperation({ summary: 'Danh sách tất cả captures (không kèm drafts)' })
+  @ApiResponse({ status: 200, schema: { example: { captures: [], total: 0 } } })
+  findAll() {
+    return this.capturesService.findAll();
+  }
+
+  // ── POST /captures ─────────────────────────────────────────────────────────
   @Post()
   @ApiOperation({
-    summary: 'Gửi một câu để AI tách thành các task',
-    description:
-      'Nhận câu nói hoặc gõ tự nhiên, tách thành các task nháp kèm deadline và mức ưu tiên. ' +
-      'Chưa lưu thành task thật: cần gọi POST /captures/{id}/confirm sau khi người dùng xem và sửa.',
+    summary: 'Tạo capture mới',
+    description: 'Ghi nhận văn bản. Trạng thái ban đầu là `draft`.',
   })
-  @ApiCreatedResponse({ type: CaptureResponseDto })
-  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
-  @ApiUnprocessableEntityResponse({ description: 'Không tách được việc nào từ nội dung' })
+  @ApiResponse({
+    status: 201,
+    description: 'Capture đã được tạo.',
+    schema: {
+      example: {
+        id: 'uuid',
+        text: 'Ngày mai 9h họp nhóm',
+        capturedAt: '2026-11-03T07:25:00.000Z',
+        mode: 'text',
+        status: 'draft',
+        drafts: [],
+      },
+    },
+  })
   create(@Body() dto: CreateCaptureDto) {
     return this.capturesService.create(dto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Danh sách capture', description: 'Có thể lọc theo trạng thái. Mới nhất trước.' })
-  @ApiOkResponse({ type: CaptureResponseDto, isArray: true })
-  findAll(@Query() query: ListCapturesQueryDto) {
-    return this.capturesService.findAll(query);
-  }
-
+  // ── GET /captures/:id ──────────────────────────────────────────────────────
   @Get(':id')
-  @ApiOperation({ summary: 'Chi tiết một capture' })
-  @ApiParam({ name: 'id', description: 'Id của capture (UUID)' })
-  @ApiOkResponse({ type: CaptureResponseDto })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiOperation({ summary: 'Lấy chi tiết một capture (kèm drafts nếu đã parse)' })
+  @ApiParam({ name: 'id', description: 'UUID của capture' })
+  @ApiResponse({ status: 200, description: 'Thành công.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  findOne(@Param('id') id: string) {
     return this.capturesService.findOne(id);
   }
 
-  @Post(':id/confirm')
-  @HttpCode(HttpStatus.OK)
+  // ── POST /captures/:id/parse ───────────────────────────────────────────────
+  @Post(':id/parse')
   @ApiOperation({
-    summary: 'Xác nhận capture và lưu thành task',
+    summary: 'Tách task từ capture',
     description:
-      'Gửi body rỗng để lưu đúng các task AI đã tách, hoặc gửi danh sách "tasks" đã sửa hoặc xóa bớt. ' +
-      'Chỉ xác nhận được capture đang ở trạng thái pending.',
+      '- `engine=local` → phân tích offline (không cần API key)\n' +
+      '- `engine=gemini` → gọi Gemini API (cần `apiKey` và `model`)\n\n' +
+      'Trả về capture với `status=review` và danh sách `drafts`.',
   })
-  @ApiParam({ name: 'id', description: 'Id của capture (UUID)' })
-  @ApiOkResponse({ type: ConfirmCaptureResponseDto })
-  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
-  @ApiConflictResponse({ description: 'Capture đã được xác nhận hoặc đã bỏ qua' })
-  confirm(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ConfirmCaptureDto) {
-    return this.capturesService.confirm(id, dto.tasks);
+  @ApiParam({ name: 'id', description: 'UUID của capture' })
+  @ApiResponse({ status: 201, description: 'Đã tách xong, trả về drafts.' })
+  @ApiResponse({ status: 400, description: 'Lỗi tham số hoặc Gemini.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  parse(@Param('id') id: string, @Body() dto: ParseCaptureDto) {
+    return this.capturesService.parse(id, dto);
   }
 
-  @Delete(':id')
+  // ── POST /captures/:id/confirm ─────────────────────────────────────────────
+  @Post(':id/confirm')
   @ApiOperation({
-    summary: 'Bỏ qua capture',
-    description: 'Đánh dấu discarded, không tạo task. Chỉ bỏ qua được capture đang pending.',
+    summary: 'Xác nhận drafts → tạo Task',
+    description:
+      'Truyền `selectedIds` chứa id các draft muốn lưu. ' +
+      'Capture sẽ bị xoá sau khi xác nhận.',
   })
-  @ApiParam({ name: 'id', description: 'Id của capture (UUID)' })
-  @ApiOkResponse({ type: CaptureResponseDto })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
-  @ApiConflictResponse({ description: 'Capture đã được xác nhận hoặc đã bỏ qua' })
-  discard(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiParam({ name: 'id', description: 'UUID của capture' })
+  @ApiResponse({
+    status: 201,
+    description: 'Các task đã được tạo.',
+    schema: { example: { created: 2, tasks: [] } },
+  })
+  @ApiResponse({ status: 400, description: 'Capture chưa ở trạng thái review.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  confirm(@Param('id') id: string, @Body() dto: ConfirmCaptureDto) {
+    return this.capturesService.confirm(id, dto);
+  }
+
+  // ── DELETE /captures/:id ───────────────────────────────────────────────────
+  @Delete(':id')
+  @ApiOperation({ summary: 'Huỷ capture (xoá không tạo task)' })
+  @ApiParam({ name: 'id', description: 'UUID của capture' })
+  @ApiResponse({ status: 200, schema: { example: { message: 'Capture đã bị huỷ.' } } })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  discard(@Param('id') id: string) {
     return this.capturesService.discard(id);
   }
 }
+

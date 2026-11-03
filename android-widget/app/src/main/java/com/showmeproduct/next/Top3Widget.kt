@@ -75,9 +75,8 @@ class Top3Widget : AppWidgetProvider() {
             val prefs = Prefs(context)
             renderCached(context, Status.LOADING)
             try {
-                val json = ApiClient.fetchTopJson(prefs.baseUrl, SLOTS)
-                TopTaskParser.parse(json) // kiểm tra hợp lệ trước khi lưu
-                prefs.cachedTop = json
+                val tasks = Api.top(prefs, SLOTS)
+                prefs.cachedTop = TopTaskParser.toJson(tasks)
                 prefs.cachedAt = System.currentTimeMillis()
                 renderCached(context, Status.UPDATED)
             } catch (_: Exception) {
@@ -90,12 +89,12 @@ class Top3Widget : AppWidgetProvider() {
             // Ẩn việc vừa bấm ngay lập tức để người dùng thấy phản hồi, rồi mới gọi API.
             prefs.cachedTop?.let { json ->
                 runCatching {
-                    val remaining = TopTaskParser.parse(json).filterNot { it.id == taskId }
+                    val remaining = TopTaskParser.parseCache(json).filterNot { it.id == taskId }
                     renderTasks(context, remaining, Status.LOADING, prefs.cachedAt)
                 }
             }
             try {
-                ApiClient.complete(prefs.baseUrl, taskId)
+                Api.complete(prefs, taskId)
             } catch (_: Exception) {
                 renderCached(context, Status.OFFLINE)
                 return
@@ -105,7 +104,7 @@ class Top3Widget : AppWidgetProvider() {
 
         private fun renderCached(context: Context, status: Status) {
             val prefs = Prefs(context)
-            val tasks = prefs.cachedTop?.let { runCatching { TopTaskParser.parse(it) }.getOrNull() }
+            val tasks = prefs.cachedTop?.let { runCatching { TopTaskParser.parseCache(it) }.getOrNull() }
             renderTasks(context, tasks, status, prefs.cachedAt)
         }
 
@@ -128,7 +127,10 @@ class Top3Widget : AppWidgetProvider() {
                 }
                 views.setViewVisibility(ROW_IDS[i], android.view.View.VISIBLE)
                 views.setTextViewText(TITLE_IDS[i], task.title)
-                views.setTextViewText(SUB_IDS[i], DeadlineFormatter.format(task.deadline))
+                views.setTextViewText(
+                    SUB_IDS[i],
+                    DeadlineFormatter.format(task.deadline, hasTime = task.hasTime, floatingTime = task.floatingTime),
+                )
                 views.setInt(BAR_IDS[i], "setBackgroundColor", priorityColor(context, task.priority))
                 views.setOnClickPendingIntent(DONE_IDS[i], completeIntent(context, task.id))
                 views.setOnClickPendingIntent(TITLE_IDS[i], openAppIntent(context))

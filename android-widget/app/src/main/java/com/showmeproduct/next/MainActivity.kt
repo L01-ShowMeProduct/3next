@@ -87,18 +87,15 @@ class MainActivity : Activity() {
         if (url.isEmpty()) return
         serverStatus.setText(R.string.msg_loading)
         io.execute {
-            val result = runCatching { ApiClient.health(url.trimEnd('/')) }
+            val result = runCatching { Api.testConnection(url.trimEnd('/')) }
             runOnUiThread {
-                if (result.getOrDefault(false)) {
+                result.onSuccess { kind ->
                     prefs.baseUrl = url
-                    serverStatus.setText(R.string.msg_saved_ok)
+                    serverStatus.text = getString(R.string.msg_saved_ok, kind)
                     Top3Widget.requestRefresh(this)
                     loadTop()
-                } else {
-                    serverStatus.text = getString(
-                        R.string.msg_connect_failed,
-                        result.exceptionOrNull()?.message ?: "máy chủ không trả lời đúng",
-                    )
+                }.onFailure {
+                    serverStatus.text = getString(R.string.msg_connect_failed, it.message ?: "máy chủ không trả lời đúng")
                 }
             }
         }
@@ -113,7 +110,7 @@ class MainActivity : Activity() {
         captureStatus.setText(R.string.msg_loading)
         val voice = fromVoice
         io.execute {
-            val result = runCatching { ApiClient.captureAndConfirm(prefs.baseUrl, text, voice) }
+            val result = runCatching { Api.captureAndConfirm(prefs, text, voice) }
             runOnUiThread {
                 result.onSuccess { count ->
                     captureStatus.text = getString(R.string.msg_captured, count)
@@ -154,16 +151,15 @@ class MainActivity : Activity() {
     }
 
     private fun showCachedTop() {
-        val tasks = prefs.cachedTop?.let { runCatching { TopTaskParser.parse(it) }.getOrNull() }
+        val tasks = prefs.cachedTop?.let { runCatching { TopTaskParser.parseCache(it) }.getOrNull() }
         topList.text = if (tasks == null) getString(R.string.msg_loading) else formatTop(tasks)
     }
 
     private fun loadTop() {
         io.execute {
             val result = runCatching {
-                val json = ApiClient.fetchTopJson(prefs.baseUrl, 3)
-                val tasks = TopTaskParser.parse(json)
-                prefs.cachedTop = json
+                val tasks = Api.top(prefs, 3)
+                prefs.cachedTop = TopTaskParser.toJson(tasks)
                 prefs.cachedAt = System.currentTimeMillis()
                 tasks
             }
@@ -178,8 +174,10 @@ class MainActivity : Activity() {
         if (tasks.isEmpty()) {
             getString(R.string.msg_top_empty)
         } else {
-            tasks.mapIndexed { i, t -> "${i + 1}. ${t.title}\n    ${DeadlineFormatter.format(t.deadline)}" }
-                .joinToString("\n")
+            tasks.mapIndexed { i, t ->
+                val due = DeadlineFormatter.format(t.deadline, hasTime = t.hasTime, floatingTime = t.floatingTime)
+                "${i + 1}. ${t.title}\n    $due"
+            }.joinToString("\n")
         }
 
     private fun pinWidget() {

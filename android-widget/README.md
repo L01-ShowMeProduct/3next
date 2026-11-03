@@ -34,13 +34,22 @@ Hoặc mở thư mục `android-widget` bằng Android Studio và bấm Run.
 
 ### Nối với server
 
+Widget tự nhận biết đang nối vào API nào và dùng đúng endpoint:
+
+| API | Cách nhận biết | Lấy Top 3 | Hoàn thành | Ghi nhanh |
+|---|---|---|---|---|
+| **API nhóm đã deploy** (mặc định) `https://threenext-test.onrender.com` | không có `GET /health` | `GET /tasks?status=open&ranked=true`, lấy 3 việc đầu | `PATCH /tasks/{id}/status` | `POST /captures`, `/parse`, `/confirm` |
+| **API trong thư mục `backend/`** | `GET /health` trả `service: 3next-backend` | `GET /tasks/top` | `POST /tasks/{id}/complete` | `POST /captures`, `/confirm` |
+
 | Chạy ở đâu | Địa chỉ nhập trong app |
 |---|---|
 | Server đã deploy | `https://<tên>.onrender.com` |
 | Server trên máy tính, chạy trên emulator | `http://10.0.2.2:3000` |
 | Server trên máy tính, chạy trên điện thoại thật | `http://<IP máy tính>:3000` (cùng mạng Wi-Fi, cần bật cleartext cho IP đó trong `network_security_config.xml`) |
 
-Địa chỉ mặc định nằm trong `app/build.gradle.kts` (`DEFAULT_API_URL`). Cần đổi sang địa chỉ server thật sau khi deploy.
+Địa chỉ mặc định nằm trong `app/build.gradle.kts` (`DEFAULT_API_URL`).
+
+API nhóm ghi giờ theo kiểu "giờ trần": "9h ngày mai" được lưu thành `09:00Z` mà không đổi múi giờ. Widget đọc giờ đó đúng như đã ghi (không cộng 7 tiếng), và hạn chỉ có ngày thì không hiện giờ.
 
 Gói miễn phí của Render tự ngủ khi không có ai dùng, nên lần gọi đầu có thể mất 30 đến 60 giây. App cho phép chờ tối đa 70 giây.
 
@@ -53,8 +62,9 @@ Mở app, bấm **Thêm widget vào màn hình chính** rồi xác nhận. Nếu
 | File | Vai trò |
 |---|---|
 | `Top3Widget.kt` | Widget: vẽ giao diện, xử lý bấm hoàn thành, làm mới, cache khi mất mạng |
-| `ApiClient.kt` | Gọi API (HttpURLConnection, không cần thư viện ngoài) |
-| `TopTask.kt` | Đọc JSON `GET /tasks/top` |
+| `Api.kt` | Nhận biết loại API và gọi đúng endpoint (hai bản: API nhóm và API trong `backend/`) |
+| `ApiClient.kt` | Gọi HTTP bằng OkHttp (cần vì Android không hỗ trợ PATCH trong HttpURLConnection) |
+| `TopTask.kt` | Chuẩn hóa dữ liệu từ hai API về một dạng chung, lưu cache |
 | `DeadlineFormatter.kt` | Đổi hạn chót ISO thành chữ ngắn tiếng Việt |
 | `Prefs.kt` | Lưu địa chỉ API và bản Top 3 gần nhất |
 | `MainActivity.kt` | Màn hình cấu hình, ghi nhanh, thêm widget |

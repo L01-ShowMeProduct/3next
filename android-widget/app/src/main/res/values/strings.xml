@@ -17,7 +17,7 @@
     <!-- Màn hình chính của app -->
     <string name="screen_subtitle">Nói một câu, biết ngay 3 việc nên làm tiếp</string>
     <string name="section_server">Máy chủ API</string>
-    <string name="hint_server">Địa chỉ máy chủ, ví dụ https://3next-api.onrender.com</string>
+    <string name="hint_server">Địa chỉ máy chủ, ví dụ https://threenext-test.onrender.com</string>
     <string name="btn_save_test">Lưu và thử kết nối</string>
     <string name="section_capture">Ghi nhanh</string>
     <string name="hint_capture">Gõ hoặc nói một câu, ví dụ: Thứ 6 nộp báo cáo, mai họp nhóm lúc 9 giờ</string>
@@ -26,7 +26,7 @@
     <string name="section_top">Top 3 hiện tại</string>
     <string name="btn_refresh">Làm mới</string>
     <string name="btn_add_widget">Thêm widget vào màn hình chính</string>
-    <string name="msg_saved_ok">Kết nối tốt. Đã lưu địa chỉ máy chủ.</string>
+    <string name="msg_saved_ok">Kết nối tốt (%1$s). Đã lưu địa chỉ máy chủ.</string>
     <string name="msg_connect_failed">Không kết nối được: %1$s</string>
     <string name="msg_captured">Đã lưu %1$d việc.</string>
     <string name="msg_capture_failed">Không ghi được: %1$s</string>

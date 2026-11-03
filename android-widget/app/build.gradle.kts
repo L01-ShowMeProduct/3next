@@ -14,8 +14,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Địa chỉ API mặc định. Người dùng có thể đổi trong app. Emulator gọi máy host qua 10.0.2.2.
-        buildConfigField("String", "DEFAULT_API_URL", "\"https://3next-api.onrender.com\"")
+        // Địa chỉ API mặc định (API nhóm đã deploy). Đổi được trong app. Emulator gọi máy host qua 10.0.2.2.
+        buildConfigField("String", "DEFAULT_API_URL", "\"https://threenext-test.onrender.com\"")
     }
 
     buildFeatures {
@@ -43,6 +43,8 @@ kotlin {
 }
 
 dependencies {
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }

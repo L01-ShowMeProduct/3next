@@ -21,8 +21,8 @@ const word = (pattern: string, flags = 'iu') =>
   new RegExp(`(?<![\\p{L}\\d])(?:${pattern})(?![\\p{L}\\d])`, flags);
 
 const RE_DMY = /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/;
-const RE_TIME = /(?:lúc\s*)?(\d{1,2})\s*(?:giờ(?![\p{L}])|h(?![\p{L}])|:)\s*(\d{1,2})?(?:\s*phút)?/iu;
-const RE_PERIOD = word('sáng|trưa|chiều|tối|đêm');
+const RE_TIME = /(?:(?:lúc|luc)\s*)?(\d{1,2})\s*(?:(?:giờ|gio)(?![\p{L}])|h(?![\p{L}])|:)\s*(\d{1,2})?(?:\s*(?:phút|phut))?/iu;
+const RE_PERIOD = word('sáng|trưa|chiều|tối|đêm|sang|trua|chieu');
 const RE_TODAY = word('hôm nay|hom nay');
 const RE_TOMORROW = word('ngày mai|ngay mai|mai');
 const RE_AFTER_TOMORROW = word('ngày mốt|ngày kia|ngày kìa|mốt');
@@ -36,8 +36,8 @@ const WEEKDAY_INDEX: Record<string, number> = {
   hai: 1, '2': 1, ba: 2, '3': 2, tư: 3, '4': 3, năm: 4, '5': 4, sáu: 5, '6': 5, bảy: 6, '7': 6,
 };
 
-const RE_LOW = word('không gấp|khi rảnh|khi nào rảnh|rảnh thì|nhẹ nhàng');
-const RE_HIGH = word('gấp|khẩn|quan trọng|ngay lập tức|asap|urgent');
+const RE_LOW = word('không gấp|khong gap|khi rảnh|khi ranh|khi nào rảnh|khi nao ranh|rảnh thì|ranh thi|nhẹ nhàng|nhe nhang');
+const RE_HIGH = word('gấp|gap|khẩn|khan|quan trọng|quan trong|ngay lập tức|ngay lap tuc|asap|urgent');
 
 const LEADING_FILLER = /^(?:nhớ|phải|cần|nhắc(?:\s*(?:tôi|mình))?|đừng quên|tôi|mình|vào|lúc|trước|hạn|đến|là)\s+/iu;
 const TRAILING_FILLER = /\s+(?:trước|vào|lúc|đến|hạn|là|nhé|nha)$/iu;
@@ -62,8 +62,11 @@ function buildDate(y: number, m: number, d: number, h: number, min: number): Dat
   return new Date(Date.UTC(y, m, d, h, min) - VN_OFFSET_MS);
 }
 
+const PERIOD_ALIAS: Record<string, string> = { sang: 'sáng', trua: 'trưa', chieu: 'chiều' };
+
 function normalizeHour(hour: number, period: string | undefined): number {
-  const p = period?.toLowerCase();
+  const lower = period?.toLowerCase();
+  const p = lower ? (PERIOD_ALIAS[lower] ?? lower) : undefined;
   if ((p === 'chiều' || p === 'tối') && hour < 12) return hour + 12;
   if (p === 'trưa' && hour <= 5) return hour + 12;
   return hour;

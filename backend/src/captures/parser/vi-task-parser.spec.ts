@@ -57,6 +57,15 @@ describe('parseVietnameseTasks', () => {
     expect(parseVietnameseTasks('đọc sách không gấp', NOW)[0].priority).toBe(TaskPriority.LOW);
   });
 
+  it('hiểu câu gõ không dấu', () => {
+    const [task] = parseVietnameseTasks('ngay mai hop nhom luc 9 gio gap', NOW);
+    expect(task.title).toBe('Hop nhom');
+    expect(vn(task.deadline)).toBe('2026-11-04 09:00');
+    expect(task.priority).toBe(TaskPriority.HIGH);
+    expect(vn(parseVietnameseTasks('mai nop bai luc 3 gio chieu', NOW)[0].deadline)).toBe('2026-11-04 15:00');
+    expect(parseVietnameseTasks('doc sach khong gap', NOW)[0].priority).toBe(TaskPriority.LOW);
+  });
+
   it('bỏ từ đệm ở đầu và cuối tiêu đề', () => {
     const [task] = parseVietnameseTasks('nhớ nộp báo cáo trước thứ 6', NOW);
     expect(task.title).toBe('Nộp báo cáo');

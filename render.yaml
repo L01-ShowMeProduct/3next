@@ -1,0 +1,13 @@
+# Cấu hình deploy cho Render (https://render.com): New > Blueprint > chọn repo này.
+services:
+  - type: web
+    name: 3next-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SEED_DEMO_DATA
+        value: "true"

@@ -19,24 +19,60 @@
 
 - **Frontend:** React + TypeScript
 - **AI:** _TBD_ — LLM để tách task / deadline / priority từ text hoặc voice
-- **Backend:** NestJS (TypeScript), REST API có Swagger Docs, xem `backend/README.md`
-- **Database:** _TBD_ (hiện lưu trong bộ nhớ)
+- **Backend:** NestJS 11 (TypeScript), REST API có Swagger Docs, đăng nhập email + mật khẩu (JWT), xem `backend/README.md`
+- **Database:** PostgreSQL 16 (TypeORM + migration), chạy local bằng Docker Compose
+- **Widget:** Android home screen widget (Kotlin) hiển thị Top 3
 
 ## 3. Cấu trúc thư mục
 
 ```text
 3next/
-├── README.md
-├── .gitignore
-├── mobile/        # source code mobile app
-├── backend/       # API / AI service (nếu cần)
-└── docs/          # tài liệu phụ
-    └── assets/    # hình ảnh, diagram dùng cho wiki
+├── mobile/                     # source code mobile app
+├── backend/                    # REST API (NestJS)
+│   ├── docker/                 # script khởi tạo PostgreSQL cho Docker
+│   ├── src/
+│   │   ├── auth/               # đăng ký, đăng nhập, JWT, refresh token
+│   │   │   └── dto/
+│   │   ├── captures/           # nhận câu nói/gõ, tách thành task nháp, xác nhận
+│   │   │   ├── dto/
+│   │   │   └── parser/         # bộ tách task tiếng Việt
+│   │   ├── config/             # đọc và kiểm tra biến môi trường
+│   │   ├── database/           # kết nối PostgreSQL, seed dữ liệu demo
+│   │   │   └── migrations/     # thay đổi schema theo từng phiên bản
+│   │   ├── tasks/              # quản lý task, xếp hạng Top 3
+│   │   │   └── dto/
+│   │   └── users/              # tài khoản người dùng
+│   └── test/                   # test e2e
+├── android-widget/             # widget Top 3 trên màn hình chính Android
+│   ├── app/
+│   │   └── src/
+│   │       ├── main/
+│   │       │   ├── java/       # code Kotlin
+│   │       │   └── res/        # layout, drawable, values
+│   │       └── test/           # unit test
+│   └── gradle/
+└── docs/                       # tài liệu phụ
+    ├── assets/                 # hình ảnh, diagram dùng cho wiki
+    └── backend/                # ghi chú kỹ thuật phần Backend & Data
 ```
 
 ## 4. Chạy dự án
 
-_Sẽ cập nhật khi chốt tech stack._
+**Backend** (cần Node.js 20+ và Docker Desktop):
+
+```bash
+docker compose up -d db        # bật PostgreSQL
+cd backend
+npm install
+cp .env.example .env
+npm run start:dev              # API ở http://localhost:3000, Swagger ở /docs
+```
+
+Chi tiết: [`backend/README.md`](backend/README.md) và [`docs/backend/`](docs/backend/README.md).
+
+**Widget Android:** xem [`android-widget/README.md`](android-widget/README.md).
+
+**Mobile:** _sẽ cập nhật._
 
 ## 5. Git workflow
 

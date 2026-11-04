@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -8,8 +9,10 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
+import { AuthUser, CurrentUser } from '../auth/auth.decorators';
 import { CapturesService } from './captures.service';
 import { CaptureResponseDto, ConfirmCaptureResponseDto } from './dto/capture-response.dto';
 import { ConfirmCaptureDto } from './dto/confirm-capture.dto';
@@ -17,6 +20,8 @@ import { CreateCaptureDto } from './dto/create-capture.dto';
 import { ListCapturesQueryDto } from './dto/list-captures-query.dto';
 
 @ApiTags('Captures')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Chưa đăng nhập hoặc access token hết hạn' })
 @Controller('captures')
 export class CapturesController {
   constructor(private readonly capturesService: CapturesService) {}
@@ -31,15 +36,15 @@ export class CapturesController {
   @ApiCreatedResponse({ type: CaptureResponseDto })
   @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
   @ApiUnprocessableEntityResponse({ description: 'Không tách được việc nào từ nội dung' })
-  create(@Body() dto: CreateCaptureDto) {
-    return this.capturesService.create(dto);
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateCaptureDto) {
+    return this.capturesService.create(user.id, dto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Danh sách capture', description: 'Có thể lọc theo trạng thái. Mới nhất trước.' })
   @ApiOkResponse({ type: CaptureResponseDto, isArray: true })
-  findAll(@Query() query: ListCapturesQueryDto) {
-    return this.capturesService.findAll(query);
+  findAll(@CurrentUser() user: AuthUser, @Query() query: ListCapturesQueryDto) {
+    return this.capturesService.findAll(user.id, query);
   }
 
   @Get(':id')
@@ -47,8 +52,8 @@ export class CapturesController {
   @ApiParam({ name: 'id', description: 'Id của capture (UUID)' })
   @ApiOkResponse({ type: CaptureResponseDto })
   @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.capturesService.findOne(id);
+  findOne(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.capturesService.findOne(user.id, id);
   }
 
   @Post(':id/confirm')
@@ -64,8 +69,8 @@ export class CapturesController {
   @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
   @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
   @ApiConflictResponse({ description: 'Capture đã được xác nhận hoặc đã bỏ qua' })
-  confirm(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ConfirmCaptureDto) {
-    return this.capturesService.confirm(id, dto.tasks);
+  confirm(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ConfirmCaptureDto) {
+    return this.capturesService.confirm(user.id, id, dto.tasks);
   }
 
   @Delete(':id')
@@ -77,7 +82,7 @@ export class CapturesController {
   @ApiOkResponse({ type: CaptureResponseDto })
   @ApiNotFoundResponse({ description: 'Không tìm thấy capture' })
   @ApiConflictResponse({ description: 'Capture đã được xác nhận hoặc đã bỏ qua' })
-  discard(@Param('id', ParseUUIDPipe) id: string) {
-    return this.capturesService.discard(id);
+  discard(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.capturesService.discard(user.id, id);
   }
 }

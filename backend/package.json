@@ -13,7 +13,12 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:show": "npm run typeorm -- migration:show"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -26,17 +31,25 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/setup-env.ts"
+    ]
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/swagger": "^11.2.0",
+    "@nestjs/typeorm": "^11.0.3",
+    "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.31"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -45,6 +58,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^6.0.0",
     "jest": "^30.0.0",
     "supertest": "^7.0.0",

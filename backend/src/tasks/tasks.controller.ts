@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -20,7 +21,9 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { AuthUser, CurrentUser } from '../auth/auth.decorators';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto';
 import { RankedTaskResponseDto, TaskResponseDto } from './dto/task-response.dto';
@@ -29,6 +32,8 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('Tasks')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Chưa đăng nhập hoặc access token hết hạn' })
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
@@ -37,26 +42,26 @@ export class TasksController {
   @ApiOperation({ summary: 'Tạo task mới', description: 'Tạo task trực tiếp, không qua capture.' })
   @ApiCreatedResponse({ type: TaskResponseDto })
   @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
-  create(@Body() dto: CreateTaskDto) {
-    return this.tasksService.create(dto);
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateTaskDto) {
+    return this.tasksService.create(user.id, dto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Danh sách task', description: 'Có thể lọc theo trạng thái và mức ưu tiên. Task mới nhất trước.' })
   @ApiOkResponse({ type: TaskResponseDto, isArray: true })
-  findAll(@Query() query: ListTasksQueryDto) {
-    return this.tasksService.findAll(query);
+  findAll(@CurrentUser() user: AuthUser, @Query() query: ListTasksQueryDto) {
+    return this.tasksService.findAll(user.id, query);
   }
 
   @Get('top')
   @ApiOperation({
     summary: 'Các việc nên làm tiếp theo (Top 3)',
     description:
-      'Chỉ tính task chưa xong. Xếp theo điểm = độ gấp của deadline + trọng số ưu tiên. Mỗi việc kèm lý do xếp hạng.',
+      'Chỉ tính task chưa xong của user đang đăng nhập. Xếp theo điểm = độ gấp của deadline + trọng số ưu tiên. Mỗi việc kèm lý do xếp hạng.',
   })
   @ApiOkResponse({ type: RankedTaskResponseDto, isArray: true })
-  top(@Query() query: TopTasksQueryDto) {
-    return this.tasksService.top(query.limit ?? 3);
+  top(@CurrentUser() user: AuthUser, @Query() query: TopTasksQueryDto) {
+    return this.tasksService.top(user.id, query.limit ?? 3);
   }
 
   @Get(':id')
@@ -64,8 +69,8 @@ export class TasksController {
   @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
   @ApiOkResponse({ type: TaskResponseDto })
   @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.tasksService.findOne(user.id, id);
   }
 
   @Patch(':id')
@@ -77,8 +82,8 @@ export class TasksController {
   @ApiOkResponse({ type: TaskResponseDto })
   @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
   @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTaskDto) {
-    return this.tasksService.update(id, dto);
+  update(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTaskDto) {
+    return this.tasksService.update(user.id, id, dto);
   }
 
   @Post(':id/complete')
@@ -87,8 +92,8 @@ export class TasksController {
   @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
   @ApiOkResponse({ type: TaskResponseDto })
   @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  complete(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tasksService.complete(id);
+  complete(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.tasksService.complete(user.id, id);
   }
 
   @Delete(':id')
@@ -97,7 +102,7 @@ export class TasksController {
   @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
   @ApiNoContentResponse({ description: 'Đã xóa' })
   @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    this.tasksService.remove(id);
+  async remove(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    await this.tasksService.remove(user.id, id);
   }
 }

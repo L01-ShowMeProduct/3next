@@ -1,0 +1,41 @@
+# PostgreSQL cho máy dev, kèm database riêng cho test e2e.
+#   docker compose up -d db          # chỉ bật database (dùng khi chạy backend bằng npm run start:dev)
+#   docker compose --profile api up  # bật cả database và backend trong container
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: 3next-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: next
+      POSTGRES_PASSWORD: next
+      POSTGRES_DB: next3
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Chạy một lần lúc tạo volume: tạo thêm database next3_test cho test e2e.
+      - ./backend/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U next -d next3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    profiles: ["api"]
+    build: ./backend
+    container_name: 3next-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://next:next@db:5432/next3
+      JWT_SECRET: dev-only-secret-change-me-dev-only-secret
+      NODE_ENV: development
+      SEED_DEMO_DATA: "true"
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:

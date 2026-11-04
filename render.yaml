@@ -1,4 +1,7 @@
 # Cấu hình deploy cho Render (https://render.com): New > Blueprint > chọn repo này.
+# Tạo 2 thứ: web service chạy backend (Docker) và một PostgreSQL miễn phí.
+# Lưu ý gói free: Postgres hết hạn 30 ngày sau khi tạo (14 ngày gia hạn rồi bị xóa), 1 GB, mỗi workspace 1 cái.
+# Xem docs/backend/05-deploy.md trước khi demo.
 services:
   - type: web
     name: 3next-api
@@ -9,5 +12,26 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 3next-db
+          property: connectionString
+      # Nối qua mạng nội bộ của Render (cùng region) nên không cần SSL.
+      - key: DATABASE_SSL
+        value: "false"
+      # Render tự sinh chuỗi ngẫu nhiên 256 bit, chỉ sinh lần đầu.
+      - key: JWT_SECRET
+        generateValue: true
       - key: SEED_DEMO_DATA
         value: "true"
+      # Đặt mật khẩu tài khoản demo trên dashboard Render, không ghi vào repo.
+      - key: DEMO_PASSWORD
+        sync: false
+
+databases:
+  - name: 3next-db
+    plan: free
+    databaseName: next3
+    user: next3

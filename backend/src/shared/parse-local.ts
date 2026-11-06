@@ -14,8 +14,10 @@ const days: Record<string, number> = {
   '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,
 };
 
+// Work with Vietnamese calendar fields represented in UTC, then convert once to an instant.
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const localDay = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 /**
  * Deterministic offline extraction – ported from mobile/src/domain.ts
@@ -26,12 +28,20 @@ export function parseLocal(raw: string, capturedAt: string): TaskDraft[] {
   if (Number.isNaN(reference.getTime()))
     throw new Error('Thời điểm ghi không hợp lệ.');
 
-  const text = raw.trim();
+  const vietnamReference = new Date(reference.getTime() + VN_OFFSET_MS);
+  const text = raw.normalize('NFC').trim();
   if (!text || text.length > 12000)
     throw new Error('Nhập từ 1 đến 12.000 ký tự để tách việc.');
 
   const verbs =
     '(?:nop|gui|hop|mua|doc|lam|on|tra|in|sua|viet|goi|dang ky|hoan thanh|chuan bi|bo sung|thanh toan|don|tap|di|lay|kiem tra|tra loi|xem)';
+  const schedule =
+    '(?:ngay kia|ngay mot|hom nay|toi nay|sang nay|chieu nay|trua nay|dem nay|' +
+    'ngay mai|sang mai|chieu mai|toi mai|trua mai|mai|cuoi tuan|dau tuan sau|' +
+    'thu (?:hai|ba|tu|nam|sau|bay|[2-7])(?: tuan (?:sau|nay))?|' +
+    'chu nhat(?: tuan (?:sau|nay))?|' +
+    '(?:ngay\\s+)?\\d{1,2}[/.\\-]\\d{1,2}(?:[/.\\-]\\d{4})?|' +
+    '(?:luc\\s+)?\\d{1,2}\\s*(?:h|gio|:)\\s*\\d{0,2}(?:\\s*(?:sang|chieu|toi|dem|trua))?)';
 
   const chunks = text
     .split(/[;\n]+|[.!?](?=\s|$)/)
@@ -40,7 +50,7 @@ export function parseLocal(raw: string, capturedAt: string): TaskDraft[] {
       const cuts = [
         ...n.matchAll(
           new RegExp(
-            '(?:,\\s*|\\s+va\\s+)(?=(?:(?:ngay mai|mai|hom nay|toi nay|thu \\w+(?: tuan sau)?)\\s+)?' +
+            '(?:,\\s*|\\s+(?:va|roi|sau do)\\s+)(?=(?:' + schedule + '\\s*){0,3}' +
               verbs +
               '\\b)',
             'g',
@@ -99,36 +109,38 @@ export function parseLocal(raw: string, capturedAt: string): TaskDraft[] {
     if (absolute) {
       const dd = Number(absolute[1]),
         mm = Number(absolute[2]) - 1,
-        yy = Number(absolute[3] || reference.getFullYear());
-      const candidate = new Date(yy, mm, dd);
-      if (candidate.getDate() === dd && candidate.getMonth() === mm) {
+        yy = Number(absolute[3] || vietnamReference.getUTCFullYear());
+      let candidate = new Date(Date.UTC(yy, mm, dd));
+      if (!absolute[3] && candidate.getTime() < localDay(vietnamReference).getTime())
+        candidate = new Date(Date.UTC(yy + 1, mm, dd));
+      if (candidate.getUTCDate() === dd && candidate.getUTCMonth() === mm) {
         day = candidate;
         take(absolute);
       } else warning = 'Ngày trong câu chưa hợp lệ; bạn hãy chọn lại.';
     } else if (distance) {
-      day = localDay(reference);
-      day.setDate(day.getDate() + Number(distance[1]));
+      day = localDay(vietnamReference);
+      day.setUTCDate(day.getUTCDate() + Number(distance[1]));
       take(distance);
     } else if (relative) {
-      day = localDay(reference);
+      day = localDay(vietnamReference);
       const delta = /kia|mot/.test(relative[0]) ? 2 : /mai/.test(relative[0]) ? 1 : 0;
-      day.setDate(day.getDate() + delta);
+      day.setUTCDate(day.getUTCDate() + delta);
       take(relative);
     } else if (weekday) {
-      day = localDay(reference);
+      day = localDay(vietnamReference);
       const target = weekday[1] ? days[weekday[1]] : 0;
-      let delta = (target - day.getDay() + 7) % 7;
+      let delta = (target - day.getUTCDay() + 7) % 7;
       if (weekday[2] === 'tuan sau') {
-        const monday = (day.getDay() + 6) % 7;
+        const monday = (day.getUTCDay() + 6) % 7;
         delta = 7 - monday + (target === 0 ? 6 : target - 1);
       }
-      day.setDate(day.getDate() + delta);
+      day.setUTCDate(day.getUTCDate() + delta);
       take(weekday);
     } else if (week) {
-      day = localDay(reference);
-      const monday = (day.getDay() + 6) % 7;
-      day.setDate(
-        day.getDate() + (week[0] === 'dau tuan sau' ? 7 - monday : 6 - monday),
+      day = localDay(vietnamReference);
+      const monday = (day.getUTCDay() + 6) % 7;
+      day.setUTCDate(
+        day.getUTCDate() + (week[0] === 'dau tuan sau' ? 7 - monday : 6 - monday),
       );
       take(week);
     }
@@ -152,7 +164,8 @@ export function parseLocal(raw: string, capturedAt: string): TaskDraft[] {
       } else warning = 'Có giờ nhưng chưa rõ ngày. Bạn hãy bổ sung thời hạn.';
     }
 
-    if (day) day.setHours(hour, minute, 0, 0);
+    if (day) day.setUTCHours(hour, minute, 0, 0);
+    const due = day ? new Date(day.getTime() - VN_OFFSET_MS) : null;
 
     const duration = normalized.match(
       /\b(?:khoang|mat|danh|trong)\s+(\d{1,3})\s*(phut|tieng)\b/,
@@ -180,14 +193,14 @@ export function parseLocal(raw: string, capturedAt: string): TaskDraft[] {
       ? 'low'
       : urgent
       ? 'high'
-      : day && day.getTime() - reference.getTime() < 86400000
+      : due && due.getTime() - reference.getTime() < 86400000
       ? 'high'
       : 'medium';
 
     return {
       id: uuidv4(),
       title,
-      due: day?.toISOString() ?? null,
+      due: due?.toISOString() ?? null,
       hasTime,
       priority,
       minutes: minutes && minutes <= 1440 ? minutes : null,

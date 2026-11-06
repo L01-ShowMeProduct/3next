@@ -9,7 +9,7 @@ export class UpdateTaskDto {
   @IsOptional() @IsString() @IsNotEmpty() @MaxLength(1000)
   title?: string;
 
-  @ApiPropertyOptional({ example: '2026-11-12T09:00:00.000Z' })
+  @ApiPropertyOptional({ example: '2026-11-12T02:00:00.000Z', description: 'ISO 8601 có Z hoặc offset; null để xóa hạn' })
   @IsOptional() @IsISO8601()
   due?: string | null;
 

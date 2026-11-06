@@ -60,6 +60,21 @@ class ParsingTest {
     }
 
     @Test
+    fun readsUpdatedApiDeadlinesAsUtcAndKeepsLegacyFallback() {
+        val response = org.json.JSONObject(teamSample)
+        response.put("timeSemantics", "utc")
+        val tasks = response.getJSONArray("tasks")
+        tasks.getJSONObject(1).put("due", "2026-11-04T02:00:00.000Z")
+        val parsed = TopTaskParser.parseTeam(response.toString(), 3)
+        assertTrue(parsed.all { !it.floatingTime })
+        val now = ZonedDateTime.of(2026, 11, 3, 14, 0, 0, 0, ZoneId.of("Asia/Ho_Chi_Minh"))
+        assertEquals("Ngày mai 09:00", DeadlineFormatter.format(parsed[1].deadline, now,
+            hasTime = parsed[1].hasTime, floatingTime = parsed[1].floatingTime))
+        assertEquals(parsed, TopTaskParser.parseCache(TopTaskParser.toJson(parsed)))
+        assertTrue(TopTaskParser.parseTeam(teamSample, 3).all { it.floatingTime })
+    }
+
+    @Test
     fun parsesEmptyLists() {
         assertTrue(TopTaskParser.parseNext("[]").isEmpty())
         assertTrue(TopTaskParser.parseTeam("""{"tasks":[],"total":0}""", 3).isEmpty())

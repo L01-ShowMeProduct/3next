@@ -4,6 +4,7 @@ export type Priority = 'high' | 'medium' | 'low';
 export interface Task {
   id: string;
   title: string;
+  /** Actual instant in UTC; calendar expressions are interpreted in Asia/Ho_Chi_Minh. */
   due: string | null;
   hasTime: boolean;
   priority: Priority;

@@ -5,11 +5,15 @@
   "author": "",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main",
+    "test": "npm run build && node --test test/*.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

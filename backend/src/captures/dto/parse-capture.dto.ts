@@ -11,8 +11,8 @@ export class ParseCaptureDto {
   engine: 'local' | 'gemini';
 
   @ApiPropertyOptional({
-    example: 'gemini-2.0-flash-lite',
-    description: 'Tên model Gemini (bắt buộc khi engine=gemini)',
+    example: 'model-supported-by-your-project',
+    description: 'Model được Google hỗ trợ cho dự án của bạn; có thể bỏ nếu server đã cấu hình GEMINI_MODEL',
   })
   @IsOptional() @IsString()
   model?: string;

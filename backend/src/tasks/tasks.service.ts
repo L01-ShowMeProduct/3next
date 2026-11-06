@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, Priority } from '../shared/types';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ReorderTasksDto } from './dto/reorder-tasks.dto';
+import { normalizeDue } from '../shared/deadline';
 
 @Injectable()
 export class TasksService {
@@ -18,6 +19,12 @@ export class TasksService {
     return t;
   }
 
+  private cleanTitle(title: string): string {
+    if (typeof title !== 'string' || !title.trim())
+      throw new BadRequestException('Tên công việc không được để trống.');
+    return title.trim();
+  }
+
   private rankValue(t: Task, now: Date): number {
     const hours = t.due
       ? (new Date(t.due).getTime() - now.getTime()) / 3_600_000
@@ -30,7 +37,7 @@ export class TasksService {
 
   // ── Public methods ─────────────────────────────────────────────────────────
 
-  findAll(status?: string, priority?: string, ranked?: boolean): { tasks: Task[]; total: number } {
+  findAll(status?: string, priority?: string, ranked?: boolean): { tasks: Task[]; total: number; timeSemantics: 'utc' } {
     let list = [...this.tasks];
 
     if (status === 'open' || status === 'done')
@@ -47,13 +54,13 @@ export class TasksService {
             return (a.manualOrder ?? 1e9) - (b.manualOrder ?? 1e9) || a.createdAt.localeCompare(b.createdAt);
           return (
             this.rankValue(b, now) - this.rankValue(a, now) ||
-            (a.due ?? '9999').localeCompare(b.due ?? '9999') ||
+            (a.due ? Date.parse(a.due) : Infinity) - (b.due ? Date.parse(b.due) : Infinity) ||
             a.createdAt.localeCompare(b.createdAt)
           );
         });
     }
 
-    return { tasks: list, total: list.length };
+    return { tasks: list, total: list.length, timeSemantics: 'utc' };
   }
 
   findOne(id: string): Task {
@@ -64,9 +71,9 @@ export class TasksService {
     const now = new Date().toISOString();
     const task: Task = {
       id: uuidv4(),
-      title: dto.title.trim(),
-      due: dto.due ?? null,
-      hasTime: dto.hasTime ?? false,
+      title: this.cleanTitle(dto.title),
+      due: normalizeDue(dto.due),
+      hasTime: dto.due ? dto.hasTime ?? false : false,
       priority: (dto.priority ?? 'medium') as Priority,
       minutes: dto.minutes ?? null,
       status: 'open',
@@ -81,10 +88,13 @@ export class TasksService {
 
   update(id: string, dto: UpdateTaskDto): Task {
     const task = this.find(id);
-    if (dto.title !== undefined) task.title = dto.title.trim();
-    if (dto.due !== undefined) task.due = dto.due ?? null;
-    if (dto.hasTime !== undefined) task.hasTime = dto.hasTime;
-    if (dto.priority !== undefined) task.priority = dto.priority;
+    const title = dto.title !== undefined ? this.cleanTitle(dto.title) : undefined;
+    const due = dto.due !== undefined ? normalizeDue(dto.due) : undefined;
+    if (title !== undefined) task.title = title;
+    if (due !== undefined) task.due = due;
+    if (dto.hasTime != null) task.hasTime = dto.hasTime;
+    if (!task.due) task.hasTime = false;
+    if (dto.priority != null) task.priority = dto.priority;
     if (dto.minutes !== undefined) task.minutes = dto.minutes ?? null;
     return task;
   }

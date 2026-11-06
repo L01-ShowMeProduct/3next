@@ -63,12 +63,14 @@ export class CapturesController {
     summary: 'Tách task từ capture',
     description:
       '- `engine=local` → phân tích offline (không cần API key)\n' +
-      '- `engine=gemini` → gọi Gemini API (cần `apiKey` và `model`)\n\n' +
+      '- `engine=gemini` → gọi Gemini API (cần `apiKey`; model từ request hoặc GEMINI_MODEL của server)\n\n' +
       'Trả về capture với `status=review` và danh sách `drafts`.',
   })
   @ApiParam({ name: 'id', description: 'UUID của capture' })
   @ApiResponse({ status: 201, description: 'Đã tách xong, trả về drafts.' })
   @ApiResponse({ status: 400, description: 'Lỗi tham số hoặc Gemini.' })
+  @ApiResponse({ status: 409, description: 'Capture đang được tách.' })
+  @ApiResponse({ status: 504, description: 'Gemini vượt thời gian chờ; có thể thử lại.' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
   parse(@Param('id') id: string, @Body() dto: ParseCaptureDto) {
     return this.capturesService.parse(id, dto);
@@ -88,7 +90,7 @@ export class CapturesController {
     description: 'Các task đã được tạo.',
     schema: { example: { created: 2, tasks: [] } },
   })
-  @ApiResponse({ status: 400, description: 'Capture chưa ở trạng thái review.' })
+  @ApiResponse({ status: 400, description: 'Capture chưa ở trạng thái review hoặc selectedIds không thuộc drafts hiện tại.' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
   confirm(@Param('id') id: string, @Body() dto: ConfirmCaptureDto) {
     return this.capturesService.confirm(id, dto);
@@ -99,6 +101,7 @@ export class CapturesController {
   @ApiOperation({ summary: 'Huỷ capture (xoá không tạo task)' })
   @ApiParam({ name: 'id', description: 'UUID của capture' })
   @ApiResponse({ status: 200, schema: { example: { message: 'Capture đã bị huỷ.' } } })
+  @ApiResponse({ status: 409, description: 'Capture đang được tách; chưa thể huỷ.' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
   discard(@Param('id') id: string) {
     return this.capturesService.discard(id);

@@ -22,7 +22,7 @@ export class TasksController {
   @ApiQuery({ name: 'status', required: false, enum: ['open', 'done'], description: 'Lọc theo trạng thái' })
   @ApiQuery({ name: 'priority', required: false, enum: ['high', 'medium', 'low'], description: 'Lọc theo độ ưu tiên' })
   @ApiQuery({ name: 'ranked', required: false, type: Boolean, description: 'true → sắp xếp thông minh (chỉ open)' })
-  @ApiResponse({ status: 200, description: 'Thành công', schema: { example: { tasks: [], total: 0 } } })
+  @ApiResponse({ status: 200, description: 'Thành công; due là UTC thật, timeSemantics=utc', schema: { example: { tasks: [], total: 0, timeSemantics: 'utc' } } })
   findAll(
     @Query('status') status?: string,
     @Query('priority') priority?: string,

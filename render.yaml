@@ -6,8 +6,5 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     plan: free
-    healthCheckPath: /health
+    healthCheckPath: /healthz
     autoDeploy: true
-    envVars:
-      - key: SEED_DEMO_DATA
-        value: "true"

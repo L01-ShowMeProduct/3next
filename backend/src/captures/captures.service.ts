@@ -1,10 +1,12 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, NotFoundException, BadRequestException, ConflictException,
+  GatewayTimeoutException, BadGatewayException, HttpException,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Capture, Task } from '../shared/types';
 import { TasksService } from '../tasks/tasks.service';
 import { parseLocal } from '../shared/parse-local';
+import { normalizeDue } from '../shared/deadline';
 import { CreateCaptureDto } from './dto/create-capture.dto';
 import { ParseCaptureDto } from './dto/parse-capture.dto';
 import { ConfirmCaptureDto } from './dto/confirm-capture.dto';
@@ -41,9 +43,11 @@ export class CapturesService {
   }
 
   create(dto: CreateCaptureDto): Capture {
+    const text = dto.text.trim();
+    if (!text) throw new BadRequestException('Nội dung capture không được để trống.');
     const capture: Capture = {
       id: uuidv4(),
-      text: dto.text,
+      text,
       capturedAt: new Date().toISOString(),
       mode: dto.mode,
       status: 'draft',
@@ -55,7 +59,9 @@ export class CapturesService {
 
   async parse(id: string, dto: ParseCaptureDto): Promise<Capture> {
     const capture = this.find(id);
-    if (capture.status === 'review')
+    if (capture.status === 'pending')
+      throw new ConflictException('Capture đang được tách. Vui lòng chờ kết quả.');
+    if (capture.status !== 'draft')
       throw new BadRequestException('Capture này đã được tách. Hãy xác nhận hoặc tạo capture mới.');
 
     capture.status = 'pending';
@@ -67,19 +73,26 @@ export class CapturesService {
       } else {
         // Gemini engine
         if (!dto.apiKey) throw new BadRequestException('Bạn chưa cung cấp apiKey cho Gemini.');
-        const model = dto.model ?? 'gemini-2.0-flash-lite';
+        const model = (dto.model ?? process.env.GEMINI_MODEL ?? '').trim();
+        if (!model)
+          throw new BadRequestException('Hãy cung cấp model Gemini hoặc cấu hình GEMINI_MODEL trên server.');
         if (!/^[a-zA-Z0-9.\-_]+$/.test(model))
           throw new BadRequestException('Tên model không hợp lệ.');
+
+        const timeoutMs = Number(process.env.GEMINI_TIMEOUT_MS ?? 30000);
+        if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 120000)
+          throw new BadRequestException('GEMINI_TIMEOUT_MS phải nằm trong khoảng 1–120000.');
 
         const prompt = extractionPrompt(capture.text, capture.capturedAt);
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
+            signal: AbortSignal.timeout(timeoutMs),
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': dto.apiKey },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+              generationConfig: { responseMimeType: 'application/json' },
             }),
           },
         );
@@ -107,25 +120,22 @@ export class CapturesService {
           throw new BadRequestException('AI trả kết quả chưa đúng định dạng.');
         }
 
-        if (!Array.isArray(obj.tasks) || !obj.tasks.length || obj.tasks.length > 60)
+        if (!obj || !Array.isArray(obj.tasks) || !obj.tasks.length || obj.tasks.length > 60)
           throw new BadRequestException('AI chưa tìm thấy công việc rõ ràng.');
 
         capture.drafts = obj.tasks.map((t) => {
-          if (typeof t.title !== 'string' || !String(t.title).trim())
+          if (!t || typeof t.title !== 'string' || !String(t.title).trim() || t.title.trim().length > 1000)
             throw new BadRequestException('AI trả tên công việc không hợp lệ.');
-          const due =
-            typeof t.due === 'string' && Number.isFinite(Date.parse(t.due))
-              ? new Date(t.due).toISOString()
-              : null;
+          const due = normalizeDue(t.due);
           return {
             id: uuidv4(),
             title: String(t.title).trim(),
             due,
-            hasTime: due ? !!t.hasTime : false,
+            hasTime: due ? t.hasTime === true : false,
             priority: t.priority === 'high' ? 'high' : t.priority === 'low' ? 'low' : 'medium',
             minutes:
-              typeof t.minutes === 'number' && t.minutes > 0 && t.minutes <= 1440
-                ? t.minutes
+              Number.isInteger(t.minutes) && (t.minutes as number) > 0 && (t.minutes as number) <= 1440
+                ? t.minutes as number
                 : null,
             selected: true,
             warning: typeof t.warning === 'string' && t.warning ? t.warning : undefined,
@@ -136,7 +146,13 @@ export class CapturesService {
       capture.status = 'review';
     } catch (err) {
       capture.status = 'draft';
-      throw err;
+      capture.drafts = [];
+      if (err instanceof HttpException) throw err;
+      if (dto.engine === 'local')
+        throw new BadRequestException(err instanceof Error ? err.message : 'Không tách được công việc.');
+      if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError'))
+        throw new GatewayTimeoutException('Gemini phản hồi quá lâu. Bạn có thể thử tách lại.');
+      throw new BadGatewayException('Không đọc được kết quả Gemini. Bạn có thể thử lại.');
     }
 
     return capture;
@@ -147,7 +163,11 @@ export class CapturesService {
     if (capture.status !== 'review')
       throw new BadRequestException('Capture chưa được tách. Hãy gọi /parse trước.');
 
-    const selected = capture.drafts.filter((d) => dto.selectedIds.includes(d.id));
+    const selectedIds = new Set(dto.selectedIds);
+    const draftIds = new Set(capture.drafts.map((d) => d.id));
+    if ([...selectedIds].some((draftId) => !draftIds.has(draftId)))
+      throw new BadRequestException('Danh sách draft đã thay đổi hoặc không thuộc capture. Hãy tải lại trước khi xác nhận.');
+    const selected = capture.drafts.filter((d) => selectedIds.has(d.id));
     const tasks = this.tasksService.bulkCreate(
       selected.map((d) => ({
         title: d.title,
@@ -171,6 +191,8 @@ export class CapturesService {
   discard(id: string): { message: string } {
     const idx = this.captures.findIndex((c) => c.id === id);
     if (idx === -1) throw new NotFoundException(`Capture "${id}" không tồn tại.`);
+    if (this.captures[idx].status === 'pending')
+      throw new ConflictException('Capture đang được tách. Vui lòng chờ trước khi huỷ.');
     this.captures.splice(idx, 1);
     return { message: `Capture "${id}" đã bị huỷ.` };
   }

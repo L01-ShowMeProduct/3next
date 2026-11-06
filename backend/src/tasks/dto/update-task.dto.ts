@@ -1,31 +1,28 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsISO8601, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { TaskPriority, TaskStatus } from '../task.types';
+import {
+  IsString, IsNotEmpty, MaxLength, IsOptional, IsISO8601,
+  IsBoolean, IsEnum, IsInt, Min, Max,
+} from 'class-validator';
 
 export class UpdateTaskDto {
-  @ApiPropertyOptional({ example: 'Nộp báo cáo môn Mobile (bản cuối)', minLength: 1, maxLength: 200 })
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(200)
+  @ApiPropertyOptional({ example: 'Nộp báo cáo nhóm (đã sửa)' })
+  @IsOptional() @IsString() @IsNotEmpty() @MaxLength(1000)
   title?: string;
 
-  @ApiPropertyOptional({
-    example: '2026-11-21T16:59:00.000Z',
-    description: 'Hạn chót ISO 8601. Gửi null để xóa deadline.',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsISO8601()
-  deadline?: string | null;
+  @ApiPropertyOptional({ example: '2026-11-12T02:00:00.000Z', description: 'ISO 8601 có Z hoặc offset; null để xóa hạn' })
+  @IsOptional() @IsISO8601()
+  due?: string | null;
 
-  @ApiPropertyOptional({ enum: TaskPriority })
-  @IsOptional()
-  @IsEnum(TaskPriority)
-  priority?: TaskPriority;
+  @ApiPropertyOptional({ example: true })
+  @IsOptional() @IsBoolean()
+  hasTime?: boolean;
 
-  @ApiPropertyOptional({ enum: TaskStatus })
-  @IsOptional()
-  @IsEnum(TaskStatus)
-  status?: TaskStatus;
+  @ApiPropertyOptional({ enum: ['high', 'medium', 'low'] })
+  @IsOptional() @IsEnum(['high', 'medium', 'low'])
+  priority?: 'high' | 'medium' | 'low';
+
+  @ApiPropertyOptional({ example: 90 })
+  @IsOptional() @IsInt() @Min(1) @Max(1440)
+  minutes?: number | null;
 }
+

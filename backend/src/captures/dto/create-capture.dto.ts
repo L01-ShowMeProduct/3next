@@ -1,21 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { CaptureSource } from '../capture.types';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, MaxLength, IsEnum } from 'class-validator';
 
 export class CreateCaptureDto {
   @ApiProperty({
-    example: 'Thứ 6 nộp báo cáo môn Mobile, mai họp nhóm lúc 9 giờ, mua sách ở Fahasa',
-    description: 'Một câu tự nhiên, có thể chứa nhiều việc. Với voice, đây là văn bản đã được speech-to-text.',
-    minLength: 2,
-    maxLength: 1000,
+    example: 'Ngày mai 9h họp nhóm, cuối tuần nộp bài assignment, mua tài liệu trong 3 ngày',
+    description: 'Văn bản cần tách công việc (tối đa 12.000 ký tự)',
   })
-  @IsString()
-  @MinLength(2)
-  @MaxLength(1000)
-  text!: string;
+  @IsString() @IsNotEmpty() @MaxLength(12000)
+  text: string;
 
-  @ApiPropertyOptional({ enum: CaptureSource, default: CaptureSource.TEXT })
-  @IsOptional()
-  @IsEnum(CaptureSource)
-  source?: CaptureSource;
+  @ApiProperty({ enum: ['text', 'voice'], example: 'text', description: 'Nguồn nhập liệu' })
+  @IsEnum(['text', 'voice'])
+  mode: 'text' | 'voice';
 }
+

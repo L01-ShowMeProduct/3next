@@ -1,6 +1,6 @@
 # 3Next Android Widget
 
-Widget màn hình chính hiển thị **3 việc nên làm tiếp theo**, lấy từ API của 3Next (`GET /tasks/top`). Viết bằng Kotlin thuần, không phụ thuộc framework của app chính, nên dùng được cho cả bản React hay Flutter (xem phần Tích hợp).
+Widget màn hình chính hiển thị **3 việc nên làm tiếp theo**, lấy từ Team API (`GET /tasks?status=open&ranked=true`) hoặc API 3Next cũ. Viết bằng Kotlin thuần, không phụ thuộc framework của app chính, nên dùng được cho cả bản React hay Flutter (xem phần Tích hợp).
 
 ## Widget làm được gì
 
@@ -39,7 +39,7 @@ Widget tự nhận biết đang nối vào API nào và dùng đúng endpoint:
 | API | Cách nhận biết | Lấy Top 3 | Hoàn thành | Ghi nhanh |
 |---|---|---|---|---|
 | **API nhóm đã deploy** (mặc định) `https://threenext-test.onrender.com` | không có `GET /health` | `GET /tasks?status=open&ranked=true`, lấy 3 việc đầu | `PATCH /tasks/{id}/status` | `POST /captures`, `/parse`, `/confirm` |
-| **API trong thư mục `backend/`** | `GET /health` trả `service: 3next-backend` | `GET /tasks/top` | `POST /tasks/{id}/complete` | `POST /captures`, `/confirm` |
+| **API 3Next cũ** | `GET /health` trả `service: 3next-backend` | `GET /tasks/top` | `POST /tasks/{id}/complete` | `POST /captures`, `/confirm` |
 
 | Chạy ở đâu | Địa chỉ nhập trong app |
 |---|---|
@@ -49,7 +49,9 @@ Widget tự nhận biết đang nối vào API nào và dùng đúng endpoint:
 
 Địa chỉ mặc định nằm trong `app/build.gradle.kts` (`DEFAULT_API_URL`).
 
-API nhóm ghi giờ theo kiểu "giờ trần": "9h ngày mai" được lưu thành `09:00Z` mà không đổi múi giờ. Widget đọc giờ đó đúng như đã ghi (không cộng 7 tiếng), và hạn chỉ có ngày thì không hiện giờ.
+Backend cập nhật trong repo lưu UTC thật và trả `timeSemantics: "utc"` trong danh sách task. Widget đọc dấu này để đổi deadline sang giờ địa phương; ví dụ `02:00Z` là 09:00 Việt Nam. Server nhóm cũ không có dấu này ghi giờ trần (`09:00Z` nghĩa là 09:00), nên widget vẫn dùng cách đọc cũ khi thiếu dấu. Hạn chỉ có ngày không hiện giờ. Cache giữ đúng kiểu thời gian của từng lần tải.
+
+Cài APK widget cập nhật trước khi deploy backend UTC. APK cũ luôn đọc Team API theo giờ trần nên không phù hợp với backend mới. `/healthz` chỉ phục vụ health check deploy, không đổi cách nhận diện Team API qua `/health`.
 
 Gói miễn phí của Render tự ngủ khi không có ai dùng, nên lần gọi đầu có thể mất 30 đến 60 giây. App cho phép chờ tối đa 70 giây.
 
@@ -62,7 +64,7 @@ Mở app, bấm **Thêm widget vào màn hình chính** rồi xác nhận. Nếu
 | File | Vai trò |
 |---|---|
 | `Top3Widget.kt` | Widget: vẽ giao diện, xử lý bấm hoàn thành, làm mới, cache khi mất mạng |
-| `Api.kt` | Nhận biết loại API và gọi đúng endpoint (hai bản: API nhóm và API trong `backend/`) |
+| `Api.kt` | Nhận biết loại API và gọi đúng endpoint (Team API hiện tại và API 3Next cũ) |
 | `ApiClient.kt` | Gọi HTTP bằng OkHttp (cần vì Android không hỗ trợ PATCH trong HttpURLConnection) |
 | `TopTask.kt` | Chuẩn hóa dữ liệu từ hai API về một dạng chung, lưu cache |
 | `DeadlineFormatter.kt` | Đổi hạn chót ISO thành chữ ngắn tiếng Việt |

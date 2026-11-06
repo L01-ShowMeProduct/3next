@@ -1,20 +1,13 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { CreateTaskDto } from '../../tasks/dto/create-task.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsString } from 'class-validator';
 
 export class ConfirmCaptureDto {
-  @ApiPropertyOptional({
-    type: CreateTaskDto,
-    isArray: true,
-    description:
-      'Danh sách task sau khi người dùng đã sửa hoặc xóa bớt. Bỏ trống để lưu đúng các task AI đã tách.',
+  @ApiProperty({
+    type: [String],
+    example: ['uuid-draft-1', 'uuid-draft-2'],
+    description: 'Danh sách id của các draft muốn lưu thành task. Truyền mảng rỗng [] để huỷ toàn bộ.',
   })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(50)
-  @ValidateNested({ each: true })
-  @Type(() => CreateTaskDto)
-  tasks?: CreateTaskDto[];
+  @IsArray() @IsString({ each: true })
+  selectedIds: string[];
 }
+

@@ -1,92 +1,140 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import { Task, Priority } from '../shared/types';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { ListTasksQueryDto } from './dto/list-tasks-query.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { rankTasks } from './ranking';
-import { RankedTask, Task, TaskPriority, TaskStatus } from './task.types';
+import { ReorderTasksDto } from './dto/reorder-tasks.dto';
+import { normalizeDue } from '../shared/deadline';
 
-/**
- * Lưu task trong bộ nhớ. Dữ liệu mất khi server khởi động lại.
- * Đủ cho bản demo và test API. Khi nối Firestore, chỉ cần thay phần lưu trữ trong service này.
- */
 @Injectable()
-export class TasksService implements OnModuleInit {
-  private readonly tasks = new Map<string, Task>();
+export class TasksService {
+  /** In-memory store */
+  private tasks: Task[] = [];
 
-  onModuleInit(): void {
-    if (process.env.SEED_DEMO_DATA !== 'false') this.seedDemoData();
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  private find(id: string): Task {
+    const t = this.tasks.find((t) => t.id === id);
+    if (!t) throw new NotFoundException(`Task "${id}" không tồn tại.`);
+    return t;
   }
 
-  create(dto: CreateTaskDto, captureId: string | null = null): Task {
-    const now = new Date().toISOString();
-    const task: Task = {
-      id: randomUUID(),
-      title: dto.title.trim(),
-      deadline: dto.deadline ? new Date(dto.deadline).toISOString() : null,
-      priority: dto.priority ?? TaskPriority.MEDIUM,
-      status: TaskStatus.TODO,
-      captureId,
-      createdAt: now,
-      updatedAt: now,
-      completedAt: null,
-    };
-    this.tasks.set(task.id, task);
-    return task;
+  private cleanTitle(title: string): string {
+    if (typeof title !== 'string' || !title.trim())
+      throw new BadRequestException('Tên công việc không được để trống.');
+    return title.trim();
   }
 
-  findAll(query: ListTasksQueryDto = {}): Task[] {
-    return [...this.tasks.values()]
-      .filter((t) => !query.status || t.status === query.status)
-      .filter((t) => !query.priority || t.priority === query.priority)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  private rankValue(t: Task, now: Date): number {
+    const hours = t.due
+      ? (new Date(t.due).getTime() - now.getTime()) / 3_600_000
+      : Infinity;
+    return (
+      (t.priority === 'high' ? 50 : t.priority === 'medium' ? 20 : 0) +
+      (hours < 0 ? 120 : hours <= 6 ? 90 : hours <= 24 ? 60 : hours <= 72 ? 35 : hours <= 168 ? 15 : 0)
+    );
+  }
+
+  // ── Public methods ─────────────────────────────────────────────────────────
+
+  findAll(status?: string, priority?: string, ranked?: boolean): { tasks: Task[]; total: number; timeSemantics: 'utc' } {
+    let list = [...this.tasks];
+
+    if (status === 'open' || status === 'done')
+      list = list.filter((t) => t.status === status);
+    if (priority === 'high' || priority === 'medium' || priority === 'low')
+      list = list.filter((t) => t.priority === priority);
+
+    if (ranked) {
+      const now = new Date();
+      list = list
+        .filter((t) => t.status === 'open')
+        .sort((a, b) => {
+          if (a.manualOrder !== null || b.manualOrder !== null)
+            return (a.manualOrder ?? 1e9) - (b.manualOrder ?? 1e9) || a.createdAt.localeCompare(b.createdAt);
+          return (
+            this.rankValue(b, now) - this.rankValue(a, now) ||
+            (a.due ? Date.parse(a.due) : Infinity) - (b.due ? Date.parse(b.due) : Infinity) ||
+            a.createdAt.localeCompare(b.createdAt)
+          );
+        });
+    }
+
+    return { tasks: list, total: list.length, timeSemantics: 'utc' };
   }
 
   findOne(id: string): Task {
-    const task = this.tasks.get(id);
-    if (!task) throw new NotFoundException(`Không tìm thấy task ${id}`);
+    return this.find(id);
+  }
+
+  create(dto: CreateTaskDto): Task {
+    const now = new Date().toISOString();
+    const task: Task = {
+      id: uuidv4(),
+      title: this.cleanTitle(dto.title),
+      due: normalizeDue(dto.due),
+      hasTime: dto.due ? dto.hasTime ?? false : false,
+      priority: (dto.priority ?? 'medium') as Priority,
+      minutes: dto.minutes ?? null,
+      status: 'open',
+      createdAt: now,
+      completedAt: null,
+      sourceId: uuidv4(),
+      manualOrder: null,
+    };
+    this.tasks.push(task);
     return task;
   }
 
   update(id: string, dto: UpdateTaskDto): Task {
-    const task = this.findOne(id);
-    if (dto.title !== undefined) task.title = dto.title.trim();
-    if (dto.deadline !== undefined) {
-      task.deadline = dto.deadline ? new Date(dto.deadline).toISOString() : null;
-    }
-    if (dto.priority !== undefined) task.priority = dto.priority;
-    if (dto.status !== undefined && dto.status !== task.status) {
-      task.status = dto.status;
-      task.completedAt = dto.status === TaskStatus.DONE ? new Date().toISOString() : null;
-    }
-    task.updatedAt = new Date().toISOString();
+    const task = this.find(id);
+    const title = dto.title !== undefined ? this.cleanTitle(dto.title) : undefined;
+    const due = dto.due !== undefined ? normalizeDue(dto.due) : undefined;
+    if (title !== undefined) task.title = title;
+    if (due !== undefined) task.due = due;
+    if (dto.hasTime != null) task.hasTime = dto.hasTime;
+    if (!task.due) task.hasTime = false;
+    if (dto.priority != null) task.priority = dto.priority;
+    if (dto.minutes !== undefined) task.minutes = dto.minutes ?? null;
     return task;
   }
 
-  complete(id: string): Task {
-    return this.update(id, { status: TaskStatus.DONE });
+  updateStatus(id: string, status: 'open' | 'done'): Task {
+    const task = this.find(id);
+    task.status = status;
+    task.completedAt = status === 'done' ? new Date().toISOString() : null;
+    return task;
   }
 
-  remove(id: string): void {
-    this.findOne(id);
-    this.tasks.delete(id);
+  remove(id: string): { message: string } {
+    const idx = this.tasks.findIndex((t) => t.id === id);
+    if (idx === -1) throw new NotFoundException(`Task "${id}" không tồn tại.`);
+    this.tasks.splice(idx, 1);
+    return { message: `Task "${id}" đã được xoá.` };
   }
 
-  /** Các việc nên làm tiếp theo: chỉ tính task chưa xong, xếp theo điểm giảm dần. */
-  top(limit = 3, now: Date = new Date()): RankedTask[] {
-    return rankTasks(this.findAll({ status: TaskStatus.TODO }), limit, now);
+  reorder(dto: ReorderTasksDto): { updated: number } {
+    let updated = 0;
+    for (const item of dto.orders) {
+      const task = this.tasks.find((t) => t.id === item.id);
+      if (task) {
+        task.manualOrder = item.manualOrder;
+        updated++;
+      }
+    }
+    return { updated };
   }
 
-  /** Xóa toàn bộ dữ liệu, dùng cho test. */
-  clear(): void {
-    this.tasks.clear();
-  }
-
-  private seedDemoData(): void {
-    const inHours = (h: number) => new Date(Date.now() + h * 3600_000).toISOString();
-    this.create({ title: 'Nộp báo cáo môn Mobile', deadline: inHours(30), priority: TaskPriority.HIGH });
-    this.create({ title: 'Họp nhóm đồ án', deadline: inHours(8), priority: TaskPriority.MEDIUM });
-    this.create({ title: 'Mua sách ở Fahasa', deadline: inHours(96), priority: TaskPriority.LOW });
-    this.create({ title: 'Ôn bài kiểm tra giữa kỳ', deadline: inHours(150), priority: TaskPriority.MEDIUM });
+  /** Called by CapturesService when user confirms drafts */
+  bulkCreate(items: Omit<Task, 'id' | 'createdAt'>[]): Task[] {
+    const now = new Date().toISOString();
+    const created: Task[] = items.map((item) => ({
+      ...item,
+      id: uuidv4(),
+      createdAt: now,
+    }));
+    this.tasks.push(...created);
+    return created;
   }
 }
+

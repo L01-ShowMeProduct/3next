@@ -44,7 +44,10 @@ object TopTaskParser {
      * Danh sách đã được server xếp hạng, nên lấy các việc đầu tiên.
      */
     fun parseTeam(json: String, limit: Int): List<TopTask> {
-        val tasks = JSONObject(json).getJSONArray("tasks")
+        val response = JSONObject(json)
+        val tasks = response.getJSONArray("tasks")
+        // Updated API sends actual UTC instants. Older deployed servers used wall-clock UTC.
+        val floatingTime = response.optString("timeSemantics") != "utc"
         return (0 until minOf(tasks.length(), limit)).map { i ->
             val t = tasks.getJSONObject(i)
             TopTask(
@@ -53,7 +56,7 @@ object TopTaskParser {
                 deadline = if (t.isNull("due")) null else t.getString("due"),
                 priority = t.optString("priority", "medium"),
                 hasTime = t.optBoolean("hasTime", false),
-                floatingTime = true,
+                floatingTime = floatingTime,
             )
         }
     }

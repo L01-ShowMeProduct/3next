@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TasksModule } from '../tasks/tasks.module';
 import { CapturesController } from './captures.controller';
 import { CapturesService } from './captures.service';
+import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
   imports: [TasksModule],
@@ -9,3 +9,4 @@ import { CapturesService } from './captures.service';
   providers: [CapturesService],
 })
 export class CapturesModule {}
+

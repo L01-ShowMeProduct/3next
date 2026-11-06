@@ -1,103 +1,90 @@
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Query,
+  Controller, Get, Post, Patch, Delete,
+  Param, Body, Query,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
+  ApiTags, ApiOperation, ApiQuery, ApiParam, ApiResponse,
 } from '@nestjs/swagger';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { ListTasksQueryDto } from './dto/list-tasks-query.dto';
-import { RankedTaskResponseDto, TaskResponseDto } from './dto/task-response.dto';
-import { TopTasksQueryDto } from './dto/top-tasks-query.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
+import { ReorderTasksDto } from './dto/reorder-tasks.dto';
 
 @ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
+  // ── GET /tasks ─────────────────────────────────────────────────────────────
+  @Get()
+  @ApiOperation({ summary: 'Lấy danh sách task', description: 'Hỗ trợ lọc theo status, priority và sắp xếp thông minh.' })
+  @ApiQuery({ name: 'status', required: false, enum: ['open', 'done'], description: 'Lọc theo trạng thái' })
+  @ApiQuery({ name: 'priority', required: false, enum: ['high', 'medium', 'low'], description: 'Lọc theo độ ưu tiên' })
+  @ApiQuery({ name: 'ranked', required: false, type: Boolean, description: 'true → sắp xếp thông minh (chỉ open)' })
+  @ApiResponse({ status: 200, description: 'Thành công; due là UTC thật, timeSemantics=utc', schema: { example: { tasks: [], total: 0, timeSemantics: 'utc' } } })
+  findAll(
+    @Query('status') status?: string,
+    @Query('priority') priority?: string,
+    @Query('ranked') ranked?: string,
+  ) {
+    return this.tasksService.findAll(status, priority, ranked === 'true');
+  }
+
+  // ── PATCH /tasks/reorder  (phải đứng TRƯỚC /:id) ──────────────────────────
+  @Patch('reorder')
+  @ApiOperation({ summary: 'Đổi thứ tự thủ công', description: 'Gán manualOrder cho nhiều task cùng lúc.' })
+  @ApiResponse({ status: 200, schema: { example: { updated: 2 } } })
+  reorder(@Body() dto: ReorderTasksDto) {
+    return this.tasksService.reorder(dto);
+  }
+
+  // ── POST /tasks ────────────────────────────────────────────────────────────
   @Post()
-  @ApiOperation({ summary: 'Tạo task mới', description: 'Tạo task trực tiếp, không qua capture.' })
-  @ApiCreatedResponse({ type: TaskResponseDto })
-  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
+  @ApiOperation({ summary: 'Tạo task mới' })
+  @ApiResponse({ status: 201, description: 'Task đã được tạo.' })
   create(@Body() dto: CreateTaskDto) {
     return this.tasksService.create(dto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Danh sách task', description: 'Có thể lọc theo trạng thái và mức ưu tiên. Task mới nhất trước.' })
-  @ApiOkResponse({ type: TaskResponseDto, isArray: true })
-  findAll(@Query() query: ListTasksQueryDto) {
-    return this.tasksService.findAll(query);
-  }
-
-  @Get('top')
-  @ApiOperation({
-    summary: 'Các việc nên làm tiếp theo (Top 3)',
-    description:
-      'Chỉ tính task chưa xong. Xếp theo điểm = độ gấp của deadline + trọng số ưu tiên. Mỗi việc kèm lý do xếp hạng.',
-  })
-  @ApiOkResponse({ type: RankedTaskResponseDto, isArray: true })
-  top(@Query() query: TopTasksQueryDto) {
-    return this.tasksService.top(query.limit ?? 3);
-  }
-
+  // ── GET /tasks/:id ─────────────────────────────────────────────────────────
   @Get(':id')
-  @ApiOperation({ summary: 'Chi tiết một task' })
-  @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
-  @ApiOkResponse({ type: TaskResponseDto })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiOperation({ summary: 'Lấy chi tiết một task' })
+  @ApiParam({ name: 'id', description: 'UUID của task' })
+  @ApiResponse({ status: 200, description: 'Thành công.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id);
   }
 
+  // ── PATCH /tasks/:id ───────────────────────────────────────────────────────
   @Patch(':id')
-  @ApiOperation({
-    summary: 'Sửa task',
-    description: 'Chỉ cần gửi các trường muốn đổi. Gửi deadline = null để xóa deadline.',
-  })
-  @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
-  @ApiOkResponse({ type: TaskResponseDto })
-  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTaskDto) {
+  @ApiOperation({ summary: 'Cập nhật nội dung task (partial)' })
+  @ApiParam({ name: 'id', description: 'UUID của task' })
+  @ApiResponse({ status: 200, description: 'Đã cập nhật.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
     return this.tasksService.update(id, dto);
   }
 
-  @Post(':id/complete')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Đánh dấu hoàn thành', description: 'Task đã xong sẽ không còn trong Top 3.' })
-  @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
-  @ApiOkResponse({ type: TaskResponseDto })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  complete(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tasksService.complete(id);
+  // ── PATCH /tasks/:id/status ────────────────────────────────────────────────
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Đánh dấu done / open', description: 'Cập nhật trạng thái và completedAt tự động.' })
+  @ApiParam({ name: 'id', description: 'UUID của task' })
+  @ApiResponse({ status: 200, description: 'Đã cập nhật trạng thái.' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
+    return this.tasksService.updateStatus(id, dto.status);
   }
 
+  // ── DELETE /tasks/:id ──────────────────────────────────────────────────────
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Xóa task' })
-  @ApiParam({ name: 'id', description: 'Id của task (UUID)' })
-  @ApiNoContentResponse({ description: 'Đã xóa' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy task' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    this.tasksService.remove(id);
+  @ApiOperation({ summary: 'Xoá task' })
+  @ApiParam({ name: 'id', description: 'UUID của task' })
+  @ApiResponse({ status: 200, schema: { example: { message: 'Task đã được xoá.' } } })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
+  remove(@Param('id') id: string) {
+    return this.tasksService.remove(id);
   }
 }
+

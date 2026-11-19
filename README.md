@@ -94,3 +94,19 @@ Commit:  feat: add quick capture screen
 - Pull Request nhỏ, tập trung vào một thay đổi.
 - Ít nhất một thành viên khác review trước khi merge.
 - Không commit `.env`, API key hoặc secret.
+
+## Landing page BTL2
+
+Trang giới thiệu nằm trong `docs/index.html`, dùng HTML, CSS và JavaScript tĩnh. Chạy từ thư mục gốc repo:
+
+```bash
+python -m http.server 5188 --directory docs
+```
+
+Mở `http://localhost:5188`. Logo, ảnh thiết kế Figma và font Inter được phục vụ từ `docs/assets/landing/`.
+
+Để phát hành bằng GitHub Pages, đưa các thay đổi lên nhánh được nhóm duyệt, sau đó chọn **Settings → Pages → Deploy from a branch**, chọn nhánh chứa trang và thư mục **/docs**. Kiểm tra URL do GitHub cung cấp trên điện thoại và ở cửa sổ ẩn danh trước khi nộp.
+
+Mục Behance đang hiển thị trạng thái chờ công bố. Khi có URL bài công khai, đổi khối `resource-pending` trong `docs/index.html` thành liên kết đến bài đó. Prototype được tải sau khi người xem bấm nút và có liên kết mở toàn màn hình.
+
+AI hỗ trợ soạn nội dung, viết mã và kiểm tra responsive cho landing page. Nhóm cần rà soát, xác nhận nội dung và cập nhật tình trạng sản phẩm trước khi công bố.

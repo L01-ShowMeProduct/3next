@@ -110,9 +110,9 @@ Trang đã được đăng công khai tại https://l01-showmeproduct.github.io/
 
 | File | Nội dung |
 |---|---|
-| `docs/index.html` | Trang chính, một file HTML có CSS nhúng, tông màu theo design system trong Figma |
-| `docs/landing-v2.html` | Bản thay thế do Chính làm (dùng `landing.css`, `landing.js`, font Inter tự lưu trong repo). Xem tại `/landing-v2.html` |
-| `docs/assets/landing/` | Logo, favicon và ảnh màn hình thiết kế dùng cho cả hai bản |
+| `docs/index.html` | **Trang chính**, do Chính làm (dùng `landing.css`, `landing.js` và font Inter tự lưu trong repo). Đã bổ sung khối trạng thái phát triển, số liệu khảo sát, tên nhóm và thẻ chia sẻ |
+| `docs/landing-v1.html` | Bản thay thế, CSS nhúng sẵn, xem tại `/landing-v1.html` |
+| `docs/assets/landing/` | Logo (`logo.png` cho trang chính, `logo-alt.png` cho bản thay thế), ảnh màn hình thiết kế, font |
 
 Chạy thử trên máy, từ thư mục gốc repo:
 
@@ -120,8 +120,8 @@ Chạy thử trên máy, từ thư mục gốc repo:
 python -m http.server 5188 --directory docs
 ```
 
-Mở `http://localhost:5188` (trang chính) hoặc `http://localhost:5188/landing-v2.html`.
+Mở `http://localhost:5188` (trang chính) hoặc `http://localhost:5188/landing-v1.html`.
 
-Khi có link Behance, trong `docs/index.html` sửa hai thẻ có `id="behance-link"` và `id="behance-link-2"`: đặt `href` là link bài, xóa class `is-pending` và chữ "(sắp công bố)". Sau khi đẩy lên `main`, Pages tự cập nhật trong khoảng một phút. Kiểm tra trên điện thoại và bằng tab ẩn danh trước khi nộp.
+Khi có link Behance, trong `docs/index.html` thay thẻ `<div class="resource resource-pending" id="behance-resource">` bằng thẻ `<a class="resource" href="LINK_BEHANCE" ...>` giống thẻ Figma bên cạnh. Sau khi đẩy lên `main`, Pages tự cập nhật trong khoảng một phút. Kiểm tra trên điện thoại và bằng tab ẩn danh trước khi nộp.
 
 AI hỗ trợ soạn nội dung, viết mã và kiểm tra responsive cho landing page. Nhóm cần rà soát, xác nhận nội dung và cập nhật tình trạng sản phẩm trước khi công bố.

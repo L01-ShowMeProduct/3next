@@ -1,0 +1,345 @@
+<!doctype html>
+<!--
+  Landing page của 3Next (BTL2, CO3043, HCMUT).
+  Khi nhóm đăng case study lên Behance, thay href của nút có id="behance-link" và id="behance-link-2"
+  bằng link thật, rồi xóa class "is-pending" cùng dòng chữ "(sắp công bố)".
+-->
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3Next | Nói một câu, biết ngay 3 việc cần làm tiếp</title>
+  <meta name="description" content="3Next giúp sinh viên ghi nhanh việc cần làm bằng chữ hoặc giọng nói. AI tách việc, bạn xác nhận, và app luôn cho biết 3 việc nên làm tiếp.">
+  <meta name="theme-color" content="#2563EB">
+  <meta property="og:title" content="3Next | Nói một câu, biết ngay 3 việc cần làm tiếp">
+  <meta property="og:description" content="Ghi nhanh bằng chữ hoặc giọng nói. AI tách việc, bạn xác nhận, app chọn giúp 3 việc nên làm tiếp.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/landing/screen-top3.webp">
+  <link rel="icon" type="image/png" href="assets/landing/favicon.png">
+  <link rel="apple-touch-icon" href="assets/landing/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Lấy từ design system trong Figma */
+      --brand: #2563EB;
+      --brand-dark: #1D4ED8;
+      --navy: #152F57;
+      --muted: #60738D;
+      --sky: #EAF3FF;
+      --mist: #F4F8FF;
+      --line: #D7E3F4;
+      --teal: #34B9A5;
+      --teal-dark: #0F766E;
+      --danger: #B14444;
+      --radius: 20px;
+      --shadow: 0 18px 40px rgba(21, 47, 87, .14);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+    body {
+      margin: 0; color: var(--navy); background: #fff;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: var(--brand); }
+    h1, h2, h3, p { margin: 0; }
+    .wrap { width: min(1120px, 100% - 40px); margin-inline: auto; }
+    .skip { position: absolute; left: -999px; top: 8px; background: var(--navy); color: #fff; padding: 10px 14px; border-radius: 10px; z-index: 50; }
+    .skip:focus { left: 8px; }
+    :focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
+
+    /* Thanh đầu trang */
+    header.top {
+      position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, .92);
+      backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+    }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--navy); font-weight: 800; font-size: 20px; }
+    .brand img { width: 40px; height: 40px; border-radius: 10px; }
+    nav.main { display: flex; gap: 22px; }
+    nav.main a { color: var(--navy); text-decoration: none; font-weight: 500; font-size: 15px; }
+    nav.main a:hover { color: var(--brand); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 22px;
+      border-radius: 14px; font-weight: 700; font-size: 16px; text-decoration: none; border: 2px solid transparent;
+      transition: transform .15s ease, background .15s ease; cursor: pointer;
+    }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-dark); transform: translateY(-1px); }
+    .btn-ghost { background: #fff; color: var(--brand); border-color: var(--brand); }
+    .btn-ghost:hover { background: var(--sky); }
+    .btn.is-pending { color: var(--muted); border-color: var(--line); background: var(--mist); cursor: default; pointer-events: none; }
+
+    /* Hero */
+    .hero { background: linear-gradient(180deg, var(--sky), #fff 78%); padding: 64px 0 24px; overflow: hidden; }
+    .hero .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+    .eyebrow { display: inline-block; color: var(--brand); font-weight: 700; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 14px; }
+    h1 { font-size: clamp(34px, 5.2vw, 56px); line-height: 1.08; font-weight: 800; letter-spacing: -.02em; }
+    h1 em { font-style: normal; color: var(--brand); }
+    .lead { margin-top: 18px; font-size: clamp(17px, 2vw, 20px); color: var(--muted); max-width: 34em; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .hint { margin-top: 14px; font-size: 14px; color: var(--muted); }
+    .phones { position: relative; height: 520px; }
+    .phone {
+      position: absolute; width: 238px; border-radius: 34px; border: 7px solid var(--navy); background: var(--navy);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .phone img { border-radius: 26px; width: 100%; }
+    .phones .p1 { left: 6%; top: 24px; transform: rotate(-4deg); }
+    .phones .p2 { right: 4%; top: 0; transform: rotate(3deg); }
+
+    /* Trạng thái */
+    .status { background: var(--navy); color: #fff; }
+    .status .wrap { padding: 22px 0; display: grid; gap: 14px; }
+    .status strong { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #BFD7FF; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; list-style: none; margin: 0; padding: 0; }
+    .steps li { background: rgba(255, 255, 255, .08); border-radius: 14px; padding: 12px 14px; font-size: 14.5px; line-height: 1.45; }
+    .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; margin-bottom: 6px; }
+    .tag.done { background: #CFF3EC; color: #0B4F48; }
+    .tag.now { background: #FFE9B8; color: #6B4600; }
+    .tag.next { background: #DCE8FF; color: #1D3F8F; }
+
+    section.block { padding: 84px 0; }
+    section.tint { background: var(--mist); }
+    .section-head { max-width: 720px; margin-bottom: 40px; }
+    .section-head p { margin-top: 12px; color: var(--muted); }
+    h2 { font-size: clamp(28px, 3.6vw, 40px); line-height: 1.15; font-weight: 800; letter-spacing: -.015em; }
+    h3 { font-size: 20px; line-height: 1.3; font-weight: 700; }
+
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
+    .card p { margin-top: 8px; color: var(--muted); font-size: 16px; }
+    .stat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .stat b { font-size: 44px; line-height: 1; color: var(--brand); font-weight: 800; }
+    .source { margin-top: 18px; font-size: 14px; color: var(--muted); }
+
+    .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: step; }
+    .how .card { position: relative; padding-top: 58px; }
+    .how .card::before {
+      counter-increment: step; content: counter(step); position: absolute; top: 20px; left: 26px;
+      width: 32px; height: 32px; border-radius: 10px; background: var(--brand); color: #fff;
+      display: grid; place-items: center; font-weight: 800;
+    }
+
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .features .card { padding: 22px; }
+    .features .card h3 { font-size: 18px; }
+
+    .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px 22px; }
+    figure { margin: 0; }
+    figure .frame { border-radius: 28px; border: 6px solid var(--navy); background: var(--navy); overflow: hidden; box-shadow: var(--shadow); }
+    figure .frame img { border-radius: 20px; }
+    figcaption { margin-top: 12px; font-size: 15px; color: var(--navy); font-weight: 600; line-height: 1.4; }
+    figcaption span { display: block; margin-top: 2px; font-weight: 400; color: var(--muted); font-size: 14px; }
+
+    .links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .links .card { display: flex; flex-direction: column; gap: 14px; justify-content: space-between; }
+    .links .card .btn { align-self: flex-start; }
+
+    footer { background: var(--navy); color: #D7E3F4; padding: 38px 0; font-size: 15px; }
+    footer a { color: #fff; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    footer p + p { margin-top: 6px; }
+
+    @media (max-width: 960px) {
+      .hero .wrap { grid-template-columns: 1fr; }
+      .phones { height: 500px; max-width: 460px; margin-inline: auto; width: 100%; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+      .gallery { grid-template-columns: repeat(2, 1fr); }
+      .features { grid-template-columns: repeat(2, 1fr); }
+      .how, .links, .two { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      body { font-size: 16px; }
+      nav.main { display: none; }
+      section.block { padding: 56px 0; }
+      .hero { padding-top: 40px; }
+      .phone { width: 200px; }
+      .phones { height: 440px; }
+      .steps, .features { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+      .cta .btn { width: 100%; }
+      .links .card .btn { align-self: stretch; }
+      .top .btn { min-height: 44px; padding: 10px 16px; font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, tới nội dung chính</a>
+
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="#" aria-label="3Next, về đầu trang">
+        <img src="assets/landing/logo.png" width="40" height="40" alt="">
+        <span>3Next</span>
+      </a>
+      <nav class="main" aria-label="Điều hướng chính">
+        <a href="#van-de">Vấn đề</a>
+        <a href="#giai-phap">Giải pháp</a>
+        <a href="#tinh-nang">Tính năng</a>
+        <a href="#giao-dien">Giao diện</a>
+        <a href="#lien-ket">Liên kết</a>
+      </nav>
+      <a class="btn btn-primary" href="https://www.figma.com/proto/4RREZGItQj0N0mV3ZdMH3W/?page-id=0%3A1&node-id=22-681&starting-point-node-id=22%3A681&scaling=min-zoom&content-scaling=fixed&show-proto-sidebar=1" target="_blank" rel="noopener">Xem prototype</a>
+    </div>
+  </header>
+
+  <main id="noi-dung">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="wrap">
+        <div>
+          <span class="eyebrow">Ứng dụng di động cho sinh viên</span>
+          <h1>Nói một câu, biết ngay <em>3 việc</em> cần làm tiếp.</h1>
+          <p class="lead">Deadline đến từ lớp học, nhóm chat, LMS và email. 3Next giúp bạn ghi nhanh bằng chữ hoặc giọng nói, tách thành từng việc, rồi luôn cho biết nên làm gì trước.</p>
+          <div class="cta">
+            <a class="btn btn-primary" href="https://www.figma.com/proto/4RREZGItQj0N0mV3ZdMH3W/?page-id=0%3A1&node-id=22-681&starting-point-node-id=22%3A681&scaling=min-zoom&content-scaling=fixed&show-proto-sidebar=1" target="_blank" rel="noopener">Thử prototype trên Figma</a>
+            <a class="btn btn-ghost is-pending" id="behance-link" href="#lien-ket" aria-disabled="true">Case study Behance (sắp công bố)</a>
+          </div>
+          <p class="hint">Capture less. Think less. Know what to do next.</p>
+        </div>
+        <div class="phones" aria-hidden="true">
+          <div class="phone p1"><img src="assets/landing/screen-capture.webp" width="412" height="916" alt=""></div>
+          <div class="phone p2"><img src="assets/landing/screen-top3.webp" width="412" height="916" alt=""></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trạng thái phát triển -->
+    <section class="status" aria-label="Trạng thái phát triển">
+      <div class="wrap">
+        <strong>Trạng thái hiện tại: đang phát triển, chưa phát hành</strong>
+        <ul class="steps">
+          <li><span class="tag done">Hoàn thành</span><br>Khảo sát 14 sinh viên và xác định hướng sản phẩm</li>
+          <li><span class="tag done">Hoàn thành</span><br>Thiết kế giao diện và prototype tương tác trên Figma</li>
+          <li><span class="tag now">Đang làm</span><br>Kiểm thử prototype với người dùng ngoài nhóm</li>
+          <li><span class="tag next">Sắp tới</span><br>Ứng dụng Android hoàn chỉnh và widget (đã có bản demo widget và API)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Vấn đề -->
+    <section class="block" id="van-de">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Vấn đề</span>
+          <h2>Việc đến từ khắp nơi, còn bạn phải tự gom và tự chọn.</h2>
+          <p>Dành cho sinh viên đại học có lịch dày, nhiều deadline chồng nhau, thường nhận việc ngay lúc đi đường hoặc giữa giờ học, khi không tiện mở app phức tạp.</p>
+        </div>
+        <div class="two">
+          <div class="card">
+            <div class="stat"><b>13/14</b><span>sinh viên nhận việc từ <strong>4 nguồn trở lên</strong> (nhóm đồ án, LMS, Zalo, giảng viên nói trên lớp...)</span></div>
+            <p>Không có một nơi duy nhất, nên việc rải rác và dễ sót.</p>
+          </div>
+          <div class="card">
+            <div class="stat"><b>13/14</b><span>cần <strong>ít nhất vài phút</strong> để quyết định nên làm việc nào trước</span></div>
+            <p>Ghi lại chưa đủ, các bạn còn mất công sắp xếp thứ tự mỗi lần.</p>
+          </div>
+        </div>
+        <p class="source">Nguồn: khảo sát Google Form của nhóm với 14 sinh viên (10/2026). Mẫu nhỏ, chỉ mang tính tham khảo.</p>
+      </div>
+    </section>
+
+    <!-- Giải pháp -->
+    <section class="block tint" id="giai-phap">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Giải pháp</span>
+          <h2>Không chỉ ghi nhanh. 3Next chọn giúp việc tiếp theo.</h2>
+          <p>Nhiều app đã cho ghi bằng giọng nói. Khác biệt của 3Next nằm ở bước sau đó: AI đề xuất, bạn vẫn là người quyết định, và app luôn nói rõ vì sao việc này xếp trước.</p>
+        </div>
+        <div class="how">
+          <div class="card"><h3>Ghi nhanh</h3><p>Gõ hoặc nói một câu tự nhiên, có thể chứa nhiều việc: "Hôm nay trước 18h gửi slide, mai 9h họp nhóm, mua bút khi rảnh".</p></div>
+          <div class="card"><h3>Xem lại và xác nhận</h3><p>AI tách thành từng việc kèm hạn và mức ưu tiên. Bạn sửa hoặc bỏ bớt trước khi lưu, nên không sợ AI hiểu sai.</p></div>
+          <div class="card"><h3>Biết ngay 3 việc tiếp theo</h3><p>Danh sách luôn gọn, kèm lý do như "đến hạn sớm nhất hôm nay". Xong việc nào, việc tiếp theo hiện lên.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tính năng -->
+    <section class="block" id="tinh-nang">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Tính năng MVP</span>
+          <h2>Đủ dùng cho một ngày bận, không thừa.</h2>
+        </div>
+        <div class="features">
+          <div class="card"><h3>Ghi bằng chữ hoặc giọng nói</h3><p>Chọn cách hợp tình huống. Khi ồn hoặc ở lớp, chuyển sang gõ chữ ngay.</p></div>
+          <div class="card"><h3>AI tách việc, hạn và ưu tiên</h3><p>Hiểu cách nói tiếng Việt như "mai", "thứ 6", "7h30 tối", "không gấp".</p></div>
+          <div class="card"><h3>Sửa trước khi lưu</h3><p>Bạn giữ quyền kiểm soát. Chỉnh hạn, ưu tiên hoặc bỏ việc không muốn lưu.</p></div>
+          <div class="card"><h3>Top 3 kèm lý do</h3><p>Chỉ hiện việc quan trọng nhất, thay vì một danh sách dài gây rối.</p></div>
+          <div class="card"><h3>Widget màn hình chính</h3><p>Xem 3 việc ngay trên Android và bấm để hoàn thành, không cần mở app.</p></div>
+          <div class="card"><h3>Nhắc việc sắp đến hạn</h3><p>Thông báo đúng lúc, mở lên là thấy ngay việc cần làm.</p></div>
+          <div class="card"><h3>Xử lý lỗi nhẹ nhàng</h3><p>Lỗi tách việc hay mất mạng đều giữ nguyên câu gốc, cho thử lại hoặc tách ngay trên máy.</p></div>
+          <div class="card"><h3>Xin quyền rõ ràng</h3><p>Giải thích vì sao cần micro. Từ chối vẫn dùng được bằng cách gõ chữ.</p></div>
+          <div class="card"><h3>Hoàn thành và hoàn tác</h3><p>Một chạm để xong việc, và hoàn tác được nếu bấm nhầm.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Giao diện -->
+    <section class="block tint" id="giao-dien">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Giao diện</span>
+          <h2>Một số màn hình trong prototype.</h2>
+          <p>Thiết kế trên Figma, gồm cả trạng thái lỗi, mất mạng và xin quyền. Bấm "Xem prototype" để tự thử các luồng.</p>
+        </div>
+        <div class="gallery">
+          <figure><div class="frame"><img src="assets/landing/screen-capture.webp" width="412" height="916" loading="lazy" alt="Màn hình ghi việc với ô nhập văn bản và nút Tách công việc"></div><figcaption>Ghi nhanh<span>Chữ hoặc giọng nói, nhiều việc trong một câu</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-confirm.webp" width="412" height="916" loading="lazy" alt="Màn hình xác nhận bốn việc, mỗi việc có hạn và mức ưu tiên"></div><figcaption>Xác nhận<span>Xem và sửa trước khi lưu</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-top3.webp" width="412" height="916" loading="lazy" alt="Màn hình Top 3 việc tiếp theo kèm lý do xếp hạng"></div><figcaption>Top 3 việc tiếp theo<span>Kèm lý do và nút hoàn thành</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-widget.webp" width="412" height="916" loading="lazy" alt="Widget 3Next trên màn hình chính điện thoại hiển thị ba việc"></div><figcaption>Widget<span>Xem việc ngay trên màn hình chính</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-error.webp" width="412" height="916" loading="lazy" alt="Màn hình báo chưa tách được công việc, có nút Thử lại và Chỉnh nội dung"></div><figcaption>Khi tách việc lỗi<span>Giữ câu gốc, cho thử lại hoặc chỉnh</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-offline.webp" width="412" height="916" loading="lazy" alt="Màn hình báo chưa có kết nối mạng, có nút Thử kết nối lại và Tách trên máy"></div><figcaption>Khi mất mạng<span>Thử lại hoặc tách ngay trên máy</span></figcaption></figure>
+          <figure><div class="frame"><img src="assets/landing/screen-permission.webp" width="412" height="916" loading="lazy" alt="Hộp thoại xin quyền micro giải thích vì sao cần dùng micro"></div><figcaption>Xin quyền micro<span>Nói rõ lý do, từ chối vẫn dùng được</span></figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Liên kết -->
+    <section class="block" id="lien-ket">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Liên kết</span>
+          <h2>Xem thiết kế và tài liệu dự án.</h2>
+        </div>
+        <div class="links">
+          <div class="card">
+            <div><h3>Prototype trên Figma</h3><p>Prototype tương tác với 9 điểm bắt đầu cho từng luồng, từ ghi việc, widget đến lỗi và mất mạng.</p></div>
+            <a class="btn btn-primary" href="https://www.figma.com/proto/4RREZGItQj0N0mV3ZdMH3W/?page-id=0%3A1&node-id=22-681&starting-point-node-id=22%3A681&scaling=min-zoom&content-scaling=fixed&show-proto-sidebar=1" target="_blank" rel="noopener">Mở prototype</a>
+          </div>
+          <div class="card">
+            <div><h3>Case study trên Behance</h3><p>Câu chuyện thiết kế: vấn đề, quyết định, design system và kết quả kiểm thử với người dùng.</p></div>
+            <a class="btn btn-ghost is-pending" id="behance-link-2" href="#lien-ket" aria-disabled="true">Sắp công bố</a>
+          </div>
+          <div class="card">
+            <div><h3>Tài liệu và mã nguồn</h3><p>Wiki ghi lại nghiên cứu, quyết định sản phẩm và kế hoạch. Mã nguồn có trên GitHub.</p></div>
+            <a class="btn btn-ghost" href="https://github.com/L01-ShowMeProduct/3next/wiki" target="_blank" rel="noopener">Mở Wiki</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div>
+        <p><strong>3Next</strong> · Capture less. Think less. Know what to do next.</p>
+        <p>Đồ án môn Phát triển ứng dụng trên thiết bị di động (CO3043), Trường Đại học Bách khoa, ĐHQG-HCM.</p>
+        <p>Trạng thái: đang phát triển, chưa phát hành.</p>
+      </div>
+      <div>
+        <p>Nhóm L01 · Show Me Product</p>
+        <p>Ngô Quý Chính, Phạm Nguyễn Đăng Khoa, Bùi Trung Quân, Phạm Tấn Thành</p>
+        <p><a href="https://github.com/L01-ShowMeProduct/3next" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/L01-ShowMeProduct/3next/wiki" target="_blank" rel="noopener">Wiki</a></p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -11,7 +11,9 @@
 |---|---|
 | Wiki (tài liệu dự án) | https://github.com/L01-ShowMeProduct/3next/wiki |
 | Project board | https://github.com/orgs/L01-ShowMeProduct/projects/1 |
-| Design (Figma) | _TBD_ |
+| Design (Figma) | https://www.figma.com/design/4RREZGItQj0N0mV3ZdMH3W/Untitled--Copy-?node-id=0-1 |
+| Prototype tương tác | https://www.figma.com/proto/4RREZGItQj0N0mV3ZdMH3W/?page-id=0%3A1&node-id=22-681&starting-point-node-id=22%3A681&scaling=min-zoom&content-scaling=fixed&show-proto-sidebar=1 |
+| Landing page | https://l01-showmeproduct.github.io/3next/ |
 
 > Toàn bộ tài liệu của Assignment (Project Direction, Mobile Rationale, Evidence Plan, User Research, Existing Solutions, Business Canvas, MVP Scope, User Stories, User Flows, Project Plan...) nằm trên **Wiki**, không nằm trong repo.
 
@@ -104,16 +106,22 @@ Commit:  feat: add quick capture screen
 
 ## Landing page BTL2
 
-Trang giới thiệu nằm trong `docs/index.html`, dùng HTML, CSS và JavaScript tĩnh. Chạy từ thư mục gốc repo:
+Trang đã được đăng công khai tại https://l01-showmeproduct.github.io/3next/ (GitHub Pages, nhánh `main`, thư mục `/docs`).
+
+| File | Nội dung |
+|---|---|
+| `docs/index.html` | Trang chính, một file HTML có CSS nhúng, tông màu theo design system trong Figma |
+| `docs/landing-v2.html` | Bản thay thế do Chính làm (dùng `landing.css`, `landing.js`, font Inter tự lưu trong repo). Xem tại `/landing-v2.html` |
+| `docs/assets/landing/` | Logo, favicon và ảnh màn hình thiết kế dùng cho cả hai bản |
+
+Chạy thử trên máy, từ thư mục gốc repo:
 
 ```bash
 python -m http.server 5188 --directory docs
 ```
 
-Mở `http://localhost:5188`. Logo, ảnh thiết kế Figma và font Inter được phục vụ từ `docs/assets/landing/`.
+Mở `http://localhost:5188` (trang chính) hoặc `http://localhost:5188/landing-v2.html`.
 
-Để phát hành bằng GitHub Pages, đưa các thay đổi lên nhánh được nhóm duyệt, sau đó chọn **Settings → Pages → Deploy from a branch**, chọn nhánh chứa trang và thư mục **/docs**. Kiểm tra URL do GitHub cung cấp trên điện thoại và ở cửa sổ ẩn danh trước khi nộp.
-
-Mục Behance đang hiển thị trạng thái chờ công bố. Khi có URL bài công khai, đổi khối `resource-pending` trong `docs/index.html` thành liên kết đến bài đó. Prototype được tải sau khi người xem bấm nút và có liên kết mở toàn màn hình.
+Khi có link Behance, trong `docs/index.html` sửa hai thẻ có `id="behance-link"` và `id="behance-link-2"`: đặt `href` là link bài, xóa class `is-pending` và chữ "(sắp công bố)". Sau khi đẩy lên `main`, Pages tự cập nhật trong khoảng một phút. Kiểm tra trên điện thoại và bằng tab ẩn danh trước khi nộp.
 
 AI hỗ trợ soạn nội dung, viết mã và kiểm tra responsive cho landing page. Nhóm cần rà soát, xác nhận nội dung và cập nhật tình trạng sản phẩm trước khi công bố.

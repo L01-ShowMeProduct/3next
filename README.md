@@ -36,7 +36,13 @@
 
 ## 4. Chạy dự án
 
-_Sẽ cập nhật khi chốt tech stack._
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+MVP hiện có: màn hình Capture (nhập text) → mock AI tách task/deadline → màn hình Top 3 (kéo thả đổi thứ tự + xác nhận). Voice input và kết nối AI thật/backend sẽ làm ở bước sau.
 
 ## 5. Git workflow
 
